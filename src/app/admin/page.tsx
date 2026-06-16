@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getProfile } from '@/lib/auth';
 
 export default async function AdminDashboard() {
@@ -16,10 +17,10 @@ export default async function AdminDashboard() {
           { label: 'Utilisateurs',          value: '—', href: '/admin/users' },
           { label: 'Revenus ce mois',       value: '—', href: '/admin/analytics' },
         ].map(({ label, value, href }) => (
-          <a key={href} href={href} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-indigo-300 transition-colors">
+          <Link key={href} href={href} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-indigo-300 transition-colors">
             <p className="text-sm text-gray-500">{label}</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          </a>
+          </Link>
         ))}
       </div>
       {/* TODO Phase 5 : brancher les vraies stats depuis Supabase */}

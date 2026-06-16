@@ -517,12 +517,15 @@ grant select on public.public_profiles to anon, authenticated;
 create function public.prevent_privilege_escalation()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if auth.role() <> 'service_role' and not public.is_admin() and (
+  -- Seul service_role (webhooks, API admin Next.js) peut modifier role/subscription_*.
+  -- Les admins ordinaires passent par PATCH /api/admin/users qui utilise le service_role
+  -- après avoir vérifié les droits côté applicatif.
+  if auth.role() <> 'service_role' and (
        new.role is distinct from old.role
        or new.subscription_tier is distinct from old.subscription_tier
        or new.subscription_expires_at is distinct from old.subscription_expires_at)
   then
-    raise exception 'Modification de role/abonnement réservée au staff';
+    raise exception 'Modification de role/abonnement réservée au service_role';
   end if;
   return new;
 end;

@@ -22,7 +22,9 @@ const KIND_SECTIONS: { kind: MangaKind; label: string; icon: string; desc: strin
 // - supprime les chars spéciaux PostgREST `,()` qui brisent la syntaxe du filtre
 // - échappe les wildcards ILIKE `%` et `_` pour qu'ils soient traités littéralement
 function buildSearchOrFilter(q: string): string {
-  const safe    = q.replace(/[(),]/g, '');
+  // Supprime les chars PostgREST `,()` et les espaces (invalides dans un token wfts).
+  // Échappe les wildcards ILIKE `%_\` pour qu'ils soient traités littéralement.
+  const safe    = q.replace(/[(),\s]/g, '');
   const escaped = safe.replace(/[%_\\]/g, '\\$&');
   return `search_vector.wfts.${safe},title.ilike.%${escaped}%,description.ilike.%${escaped}%`;
 }

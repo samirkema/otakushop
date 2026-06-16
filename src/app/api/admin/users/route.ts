@@ -3,26 +3,40 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSuperAdmin } from '@/lib/roles';
 import type { Database, Role } from '@/lib/supabase/types';
 
-// PATCH /api/admin/users/[id] — promotion / changement de tier
-// Seul le superadmin peut modifier le champ role vers 'admin'
+// PATCH /api/admin/users — promotion / changement de tier
+// - Tout changement (role ou subscription_tier) exige au minimum le rôle admin.
+// - Seul le superadmin peut modifier le champ role.
 export async function PATCH(request: Request) {
   const supabase        = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-  const { data: caller } = await supabase
+  const { data: callerData } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
 
-  const body = await request.json() as { userId?: string; role?: string; subscription_tier?: string };
-  const { userId, role, subscription_tier } = body;
+  const callerRole = (callerData as { role?: string } | null)?.role as Role | undefined;
+
+  // Toute modification requiert au minimum le rôle admin
+  if (!isAdmin(callerRole)) {
+    return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 });
+  }
+
+  const { userId, role, subscription_tier } = body as { userId?: string; role?: string; subscription_tier?: string };
 
   if (!userId) return NextResponse.json({ error: 'userId requis' }, { status: 400 });
 
-  // Un admin ordinaire ne peut pas modifier le champ role
-  if (role !== undefined && !isSuperAdmin((caller as { role?: string } | null)?.role as Role)) {
+  // Seul le superadmin peut modifier le champ role
+  if (role !== undefined && !isSuperAdmin(callerRole)) {
     return NextResponse.json(
       { error: 'Seul le superadmin peut modifier le rôle d\'un utilisateur' },
       { status: 403 },
