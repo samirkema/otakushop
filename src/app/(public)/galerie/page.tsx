@@ -12,10 +12,15 @@ export const metadata = { title: 'Galerie — Otaku Shop' };
 export default async function GaleriePage() {
   const supabase = await createClient();
 
-  const { data: rawTableaux } = await supabase
+  const { data: rawTableaux, error } = await supabase
     .from('tableaux')
     .select('id, title, description, artist, thumbnail, price_eur, available')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error('[GaleriePage] Supabase error:', error.message);
+  }
 
   const tableaux = (rawTableaux ?? []) as TableauRow[];
 

@@ -18,6 +18,15 @@ const KIND_SECTIONS: { kind: MangaKind; label: string; icon: string; desc: strin
   { kind: 'bd',      label: 'BD',       icon: '🎨', desc: 'Bandes dessinées francophones et internationales.' },
 ];
 
+// Construit le filtre .or() PostgREST de façon sécurisée :
+// - supprime les chars spéciaux PostgREST `,()` qui brisent la syntaxe du filtre
+// - échappe les wildcards ILIKE `%` et `_` pour qu'ils soient traités littéralement
+function buildSearchOrFilter(q: string): string {
+  const safe    = q.replace(/[(),]/g, '');
+  const escaped = safe.replace(/[%_\\]/g, '\\$&');
+  return `search_vector.wfts.${safe},title.ilike.%${escaped}%,description.ilike.%${escaped}%`;
+}
+
 async function CatalogueSection({
   kind,
   label,
@@ -33,7 +42,7 @@ async function CatalogueSection({
 }) {
   const supabase = await createClient();
 
-  let query = supabase
+  const baseQuery = supabase
     .from('manga_works')
     .select('id, title, description, cover_url, kind, views_count')
     .eq('published', true)
@@ -41,21 +50,18 @@ async function CatalogueSection({
     .order('views_count', { ascending: false })
     .limit(6);
 
-  if (q.length >= 3) {
-    // Plein-texte en priorité ; ilike comme filet si search_vector n'est pas encore peuplé
-    query = supabase
-      .from('manga_works')
-      .select('id, title, description, cover_url, kind, views_count')
-      .eq('published', true)
-      .eq('kind', kind)
-      .or(`search_vector.wfts.${q},title.ilike.%${q}%,description.ilike.%${q}%`)
-      .order('views_count', { ascending: false })
-      .limit(6);
+  const { data: works, error } = await (
+    q.length >= 3
+      ? baseQuery.or(buildSearchOrFilter(q))
+      : baseQuery
+  );
+
+  if (error) {
+    console.error('[CatalogueSection] Supabase error:', error.message);
+    return null;
   }
 
-  const { data: works } = await query;
   const list = (works ?? []) as WorkRow[];
-
   if (!list.length) return null;
 
   return (
@@ -66,6 +72,7 @@ async function CatalogueSection({
         </h2>
         <Link
           href={`/manga?kind=${kind}`}
+          aria-label={`Voir tout les ${label}`}
           className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
         >
           Voir tout →
@@ -85,13 +92,22 @@ async function SearchResults({ q }: { q: string }) {
   if (q.length < 3) return null;
 
   const supabase = await createClient();
-  const { data: rawWorks } = await supabase
+  const { data: rawWorks, error } = await supabase
     .from('manga_works')
     .select('id, title, description, cover_url, kind, views_count')
     .eq('published', true)
-    .or(`search_vector.wfts.${q},title.ilike.%${q}%,description.ilike.%${q}%`)
+    .or(buildSearchOrFilter(q))
     .order('views_count', { ascending: false })
     .limit(24);
+
+  if (error) {
+    console.error('[SearchResults] Supabase error:', error.message);
+    return (
+      <p className="text-red-500 text-center py-12">
+        Une erreur est survenue lors de la recherche.
+      </p>
+    );
+  }
 
   const works = (rawWorks ?? []) as WorkRow[];
 
@@ -136,7 +152,9 @@ export default async function HomePage({
           Mangas, webtoons et BD en streaming. Lisez en ligne, collectionnez des NFT.
         </p>
         <div className="flex justify-center">
-          <SearchBar defaultValue={q} />
+          <Suspense fallback={null}>
+            <SearchBar defaultValue={q} />
+          </Suspense>
         </div>
       </div>
 

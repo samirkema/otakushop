@@ -7,7 +7,7 @@
 create function public.update_manga_search_vector()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 begin
