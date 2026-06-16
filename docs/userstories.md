@@ -55,8 +55,9 @@
 ## 📑 Epic 5 : Administration, LLM et Analytique (V2)
 
 **User Story 5.1 : Connexion Admin Sécurisée**
-*En tant qu'administrateur, je veux utiliser un format de connexion spécifique pour accéder au back-office afin d'éviter les piratages.*
-*   **Critère 1 :** *Étant donné* que j'ai les droits admin, *Quand* je me connecte avec le format "mailenentier_admin" (ex: nom@mail.com_admin), *Alors* j'accède au tableau de bord réservé au staff.
+*En tant qu'administrateur, je veux accéder au back-office de façon sécurisée afin d'éviter les accès non autorisés.*
+*   **Critère 1 :** *Étant donné* que j'ai les droits admin, *Quand* je me connecte avec mon email normal, *Alors* le système vérifie mon rôle en base de données et m'accorde l'accès au tableau de bord réservé au staff.
+*   **Note d'implémentation :** Le suffixe `_admin` (ex: `nom@mail.com_admin`) peut être utilisé comme aiguillage UX pour rediriger automatiquement vers `/admin` après connexion. Il ne constitue en aucun cas une frontière de sécurité — l'autorisation repose uniquement sur le champ `role` en BDD.
 
 **User Story 5.2 : Gestion rapide du catalogue**
 *En tant qu'administrateur, je veux ajouter des mangas et des tableaux de données depuis le site web afin de mettre à jour le catalogue sans toucher au code.*
