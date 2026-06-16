@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const url      = new URL(request.url);
   const code     = url.searchParams.get('code');
-  const next     = url.searchParams.get('next') ?? '/';
+  const rawNext  = url.searchParams.get('next') ?? '/';
+  const next     = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
   const origin   = url.origin;
 
   if (code) {

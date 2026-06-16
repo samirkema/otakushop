@@ -231,12 +231,15 @@ grant select on public.public_profiles to anon, authenticated;
 create function public.prevent_privilege_escalation()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if auth.role() <> 'service_role' and not public.is_admin() and (
+  -- Seul service_role (webhooks, crons Next.js) peut modifier role/subscription_*.
+  -- Un admin ordinaire NE peut PAS s'auto-promouvoir — il passe par l'API PATCH
+  -- qui utilise le service_role. is_admin() n'est plus une exception ici.
+  if auth.role() <> 'service_role' and (
        new.role is distinct from old.role
        or new.subscription_tier is distinct from old.subscription_tier
        or new.subscription_expires_at is distinct from old.subscription_expires_at)
   then
-    raise exception 'Modification de role/abonnement réservée au staff';
+    raise exception 'Modification de role/abonnement réservée au service_role';
   end if;
   return new;
 end;
@@ -256,8 +259,19 @@ alter table public.profiles enable row level security;
 create policy "Lecture de son profil ou admin" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 
+-- Un utilisateur peut modifier son propre profil SAUF les colonnes sensibles.
+-- role/subscription_tier/subscription_expires_at sont bloqués par le trigger
+-- prevent_privilege_escalation, mais on ajoute ici une deuxième ligne de défense
+-- en refusant explicitement toute tentative de les modifier côté RLS.
 create policy "Modification de son propre profil" on public.profiles
-  for update using (auth.uid() = id) with check (auth.uid() = id);
+  for update
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    and new.role = old.role
+    and new.subscription_tier = old.subscription_tier
+    and new.subscription_expires_at is not distinct from old.subscription_expires_at
+  );
 
 -- Tableaux
 alter table public.tableaux enable row level security;
