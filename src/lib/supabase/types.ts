@@ -163,6 +163,7 @@ export type Database = {
       is_admin: { Args: Record<never, never>; Returns: boolean };
       is_subscriber: { Args: Record<never, never>; Returns: boolean };
       is_nft_holder: { Args: Record<never, never>; Returns: boolean };
+      increment_views_count: { Args: { work_id: string }; Returns: void };
     };
   };
 };
