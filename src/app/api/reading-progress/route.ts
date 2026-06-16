@@ -16,7 +16,7 @@ export async function PATCH(request: Request) {
 
   if (
     typeof workId !== 'string'   || !UUID_RE.test(workId) ||
-    typeof pageNumber !== 'number' || !Number.isInteger(pageNumber) || pageNumber < 1
+    typeof pageNumber !== 'number' || !Number.isInteger(pageNumber) || pageNumber < 1 || pageNumber > 10_000
   ) {
     return Response.json({ error: 'Paramètres invalides' }, { status: 400 });
   }

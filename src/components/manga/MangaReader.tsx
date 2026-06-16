@@ -17,6 +17,12 @@ interface MangaReaderProps {
 function useSaveProgress(workId: string) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   return useCallback(
     (page: number) => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -251,9 +257,16 @@ export function ResumePrompt({
   onResume: () => void;
   onRestart: () => void;
 }) {
+  const resumeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    resumeRef.current?.focus();
+  }, []);
+
   return (
     <div
       role="alertdialog"
+      aria-modal="true"
       aria-label="Reprendre la lecture"
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-6 py-4 flex flex-col sm:flex-row items-center gap-4 max-w-sm w-full mx-4"
     >
@@ -262,6 +275,7 @@ export function ResumePrompt({
       </p>
       <div className="flex gap-2 shrink-0">
         <button
+          ref={resumeRef}
           onClick={onResume}
           className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
         >
