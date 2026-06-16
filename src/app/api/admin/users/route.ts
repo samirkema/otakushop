@@ -1,0 +1,48 @@
+import { NextResponse } from 'next/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { isSuperAdmin } from '@/lib/roles';
+import type { Database, Role } from '@/lib/supabase/types';
+
+// PATCH /api/admin/users/[id] — promotion / changement de tier
+// Seul le superadmin peut modifier le champ role vers 'admin'
+export async function PATCH(request: Request) {
+  const supabase        = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+
+  const { data: caller } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const body = await request.json() as { userId?: string; role?: string; subscription_tier?: string };
+  const { userId, role, subscription_tier } = body;
+
+  if (!userId) return NextResponse.json({ error: 'userId requis' }, { status: 400 });
+
+  // Un admin ordinaire ne peut pas modifier le champ role
+  if (role !== undefined && !isSuperAdmin((caller as { role?: string } | null)?.role as Role)) {
+    return NextResponse.json(
+      { error: 'Seul le superadmin peut modifier le rôle d\'un utilisateur' },
+      { status: 403 },
+    );
+  }
+
+  const serviceClient = createServiceClient();
+  type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+  const update: ProfileUpdate = {};
+  if (role !== undefined)               update.role = role as Role;
+  if (subscription_tier !== undefined)  update.subscription_tier = subscription_tier as import('@/lib/supabase/types').SubscriptionTier;
+
+  // Type cast nécessaire jusqu'à la génération des types via `supabase gen types`
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (serviceClient as any)
+    .from('profiles')
+    .update(update)
+    .eq('id', userId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
+}
