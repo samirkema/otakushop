@@ -2,7 +2,13 @@ import { LoginForm } from '@/components/auth/LoginForm';
 
 export const metadata = { title: 'Connexion — Otaku Shop' };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ registered?: string }>;
+}) {
+  const { registered } = await searchParams;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
@@ -10,6 +16,22 @@ export default function LoginPage() {
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginBottom: '6px', letterSpacing: '1px' }}>Connexion</h1>
           <p style={{ color: '#555', fontSize: '0.875rem' }}>Accédez à votre espace Otaku Shop</p>
         </div>
+
+        {registered && (
+          <div style={{
+            background: 'rgba(0,242,255,0.05)',
+            border: '1px solid rgba(0,242,255,0.2)',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            color: '#00f2ff',
+            fontSize: '0.85rem',
+            textAlign: 'center',
+          }}>
+            Compte créé ! Vérifiez votre email pour l&apos;activer, puis connectez-vous.
+          </div>
+        )}
+
         <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '16px', padding: '32px' }}>
           <LoginForm />
         </div>
