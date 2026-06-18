@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Toast, useToast } from '@/components/ui/Toast';
 
 export function LoginForm() {
-  const router = useRouter();
   const supabase = createClient();
   const { toast, show, hide } = useToast();
 
@@ -50,13 +48,13 @@ export function LoginForm() {
       .single();
 
     const profileRole = (profile as { role?: string } | null)?.role;
-    if (isAdminHint && (profileRole === 'admin' || profileRole === 'superadmin')) {
-      router.push('/admin');
-    } else {
-      router.push('/');
-    }
+    const dest = isAdminHint && (profileRole === 'admin' || profileRole === 'superadmin')
+      ? '/admin'
+      : '/';
 
-    router.refresh();
+    // Redirect dur nécessaire : router.push() seul ne force pas les Server Components
+    // à relire la session Supabase depuis les cookies.
+    window.location.href = dest;
   }
 
   return (
