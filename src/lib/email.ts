@@ -1,11 +1,17 @@
 import { Resend } from 'resend';
 
-// RESEND_API_KEY doit être défini en variable d'environnement serveur uniquement.
-// Ne jamais préfixer avec NEXT_PUBLIC_.
-if (!process.env.RESEND_API_KEY) {
-  console.error('[email] RESEND_API_KEY is not set — email sending will fail');
+// Initialisation lazy pour éviter une exception au chargement du module lors
+// du build Next.js quand RESEND_API_KEY n'est pas définie (ex: CI, preview).
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('[email] RESEND_API_KEY is not set — cannot send email');
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
 }
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = process.env.EMAIL_FROM ?? 'Otaku Shop <noreply@otakushop.io>';
 
@@ -20,7 +26,7 @@ export async function sendSubscriptionConfirmation(opts: {
     year:  'numeric',
   });
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from:    FROM,
     to:      opts.to,
     subject: '🎉 Votre abonnement Otaku Shop est activé !',
@@ -62,7 +68,7 @@ export async function sendPaymentReceipt(opts: {
     year:  'numeric',
   });
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from:    FROM,
     to:      opts.to,
     subject: `Reçu Otaku Shop — ${opts.amountEur.toFixed(2)} €`,
