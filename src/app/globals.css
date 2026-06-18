@@ -41,6 +41,19 @@ body {
   outline-offset: 2px;
 }
 
+/* ── MODE CLAIR ── */
+[data-theme="light"] body {
+  filter: invert(1) hue-rotate(180deg);
+  background: #fff;
+}
+/* Re-inversion pour les images/vidéos/canvas pour ne pas les altérer */
+[data-theme="light"] img,
+[data-theme="light"] video,
+[data-theme="light"] canvas,
+[data-theme="light"] iframe {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* ── INPUTS DARK ── */
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 textarea,

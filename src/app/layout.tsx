@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Navbar } from '@/components/ui/Navbar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -17,9 +18,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
+      {/* Script anti-flash : appliqué avant le premier paint */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('otaku_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();` }} />
+      </head>
       <body className="min-h-screen antialiased">
         <Navbar />
         <main>{children}</main>
+        <ThemeToggle />
       </body>
     </html>
   );

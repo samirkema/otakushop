@@ -127,10 +127,7 @@ export default async function HomePage({
           }}>
             OTAKU SHOP
           </h1>
-          <div style={{ width: '40px', height: '1px', background: '#00f2ff', margin: '0 auto 18px', opacity: 0.6 }} />
-          <p style={{ color: '#444', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
-            Mangas, webtoons et BD — en ligne et en streaming.
-          </p>
+          <div style={{ width: '40px', height: '1px', background: '#00f2ff', margin: '0 auto' }} />
         </div>
 
         {/* ── GRILLE D'ACTIONS ── */}
