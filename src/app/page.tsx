@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getProfile } from '@/lib/auth';
 import { isSubscriber } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
@@ -37,16 +36,15 @@ async function CatalogueSection({ kind, label, icon, q }: {
   );
 
   if (error || !works?.length) return null;
-
   const list = works as WorkRow[];
 
   return (
     <section>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', letterSpacing: '1px' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', letterSpacing: '1px' }}>
           {icon} {label}
         </h2>
-        <Link href={`/manga?kind=${kind}`} style={{ fontSize: '0.8rem', color: '#00f2ff', textDecoration: 'none' }}>
+        <Link href={`/manga?kind=${kind}`} style={{ fontSize: '0.78rem', color: '#00f2ff', textDecoration: 'none' }}>
           Voir tout →
         </Link>
       </div>
@@ -69,17 +67,12 @@ async function SearchResults({ q }: { q: string }) {
     .limit(24);
 
   if (error) return <p style={{ color: '#f87171', textAlign: 'center', padding: '40px 0' }}>Erreur lors de la recherche.</p>;
-
   const works = (rawWorks ?? []) as WorkRow[];
-  if (!works.length) return (
-    <p style={{ color: '#666', textAlign: 'center', padding: '40px 0' }}>
-      Aucun résultat pour «{q}».
-    </p>
-  );
+  if (!works.length) return <p style={{ color: '#555', textAlign: 'center', padding: '40px 0' }}>Aucun résultat pour «{q}».</p>;
 
   return (
     <section>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>
+      <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>
         {works.length} résultat{works.length > 1 ? 's' : ''} pour «{q}»
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px' }}>
@@ -89,43 +82,11 @@ async function SearchResults({ q }: { q: string }) {
   );
 }
 
-const ACTION_BOXES = [
-  {
-    id: 'galerie',
-    href: '/galerie',
-    icon: '/icons/galerie.png',
-    title: 'GALERIE DE TABLEAUX',
-    desc: 'Découvrez la collection complète et visualisez nos pièces.',
-    color: '#00f2ff',
-    requiresSub: false,
-  },
-  {
-    id: 'manga',
-    href: '/manga',
-    icon: '/icons/manga.jpg',
-    title: 'LIRE MANGA',
-    desc: 'Accès illimité aux mangas, webtoons et BD.',
-    color: '#00f2ff',
-    requiresSub: true,
-  },
-  {
-    id: 'jeux',
-    href: '/jeux',
-    icon: '/icons/jeux.png',
-    title: 'IMMERSION',
-    desc: 'Vivez l\'univers Otaku Shop à travers des jeux exclusifs.',
-    color: '#00f2ff',
-    requiresSub: true,
-  },
-  {
-    id: 'aide',
-    href: '/aide',
-    icon: '/icons/aide.png',
-    title: "BESOIN D'AIDE ?",
-    desc: 'Tutoriel vidéo et guide complet de la plateforme.',
-    color: '#00f2ff',
-    requiresSub: false,
-  },
+const ACTIONS = [
+  { id: 'galerie',  href: '/galerie', icon: '🖼️',  title: 'GALERIE',   desc: 'Collection complète de tableaux et photomontages.', accent: '#00f2ff', requiresSub: false },
+  { id: 'manga',    href: '/manga',   icon: '📖',  title: 'MANGA',     desc: 'Mangas, webtoons et BD en streaming illimité.',      accent: '#00f2ff', requiresSub: true  },
+  { id: 'jeux',     href: '/jeux',    icon: '🎮',  title: 'IMMERSION', desc: 'My Remix et jeux exclusifs dans l\'univers Otaku.',  accent: '#00f2ff', requiresSub: true  },
+  { id: 'aide',     href: '/aide',    icon: '💡',  title: 'AIDE',      desc: 'Guide complet et tutoriel vidéo de la plateforme.',  accent: '#00f2ff', requiresSub: false },
 ];
 
 export default async function HomePage({
@@ -140,187 +101,169 @@ export default async function HomePage({
   const subscribed = isSubscriber(profile?.subscription_tier ?? null, profile?.subscription_expires_at ?? null);
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh' }}>
+    <>
+      <style>{`
+        .action-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
+        .action-card:hover { border-color: rgba(0,242,255,0.5) !important; box-shadow: 0 0 24px rgba(0,242,255,0.12); transform: translateY(-3px); }
+        .action-card:hover .action-icon { text-shadow: 0 0 20px rgba(0,242,255,0.6); }
+        .compte-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
+        .compte-card:hover { border-color: rgba(168,85,247,0.5) !important; box-shadow: 0 0 24px rgba(168,85,247,0.12); transform: translateY(-3px); }
+        .search-input:focus { border-color: rgba(0,242,255,0.5) !important; box-shadow: 0 0 12px rgba(0,242,255,0.1); }
+      `}</style>
 
-      {/* ── HERO ── */}
-      <div style={{ textAlign: 'center', padding: '60px 20px 50px' }}>
-        <h1 style={{
-          fontSize: 'clamp(1.8rem, 5vw, 2.8rem)',
-          letterSpacing: '5px',
-          color: '#00f2ff',
-          textShadow: '0 0 20px #00f2ff',
-          marginBottom: '12px',
-        }}>
-          BIENVENUE SUR OTAKU SHOP
-        </h1>
-        <p style={{ color: '#666', fontSize: '1rem', fontStyle: 'italic' }}>
-          L&apos;art de la BD débloqué par la blockchain.
-        </p>
-      </div>
+      <div style={{ background: '#000', minHeight: '100vh' }}>
 
-      {/* ── GRILLE D'ACTIONS ── */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 20px 70px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '24px',
-        }}>
-          {ACTION_BOXES.map((box) => {
-            const locked = box.requiresSub && !subscribed;
-            return (
-              <div key={box.id} style={{
-                background: 'rgba(17,17,17,0.9)',
-                border: `2px solid ${locked ? '#1e1e1e' : 'rgba(0,242,255,0.4)'}`,
-                borderRadius: '20px',
-                overflow: 'hidden',
-                transition: 'all 0.3s ease',
-                opacity: locked ? 0.6 : 1,
-                boxShadow: locked ? 'none' : '0 0 12px rgba(0,242,255,0.1)',
-              }}>
-                <Link
-                  href={locked ? '/compte' : box.href}
-                  style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                >
-                  <div style={{ width: '100%', height: '160px', overflow: 'hidden', position: 'relative' }}>
-                    <Image
-                      src={box.icon}
-                      alt={box.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  </div>
-                  <div style={{ padding: '20px 24px 16px' }}>
+        {/* ── HERO ── */}
+        <div style={{ textAlign: 'center', padding: '70px 20px 56px' }}>
+          <p style={{ color: '#333', fontSize: '0.75rem', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Streaming · NFT · Création
+          </p>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 5vw, 3rem)',
+            letterSpacing: '6px',
+            color: '#00f2ff',
+            textShadow: '0 0 30px rgba(0,242,255,0.4)',
+            margin: '0 0 14px',
+          }}>
+            OTAKU SHOP
+          </h1>
+          <div style={{ width: '40px', height: '1px', background: '#00f2ff', margin: '0 auto 18px', opacity: 0.6 }} />
+          <p style={{ color: '#444', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
+            Mangas, webtoons et BD — en ligne et en streaming.
+          </p>
+        </div>
+
+        {/* ── GRILLE D'ACTIONS ── */}
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px 72px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+
+            {ACTIONS.map((box) => {
+              const locked = box.requiresSub && !subscribed;
+              return (
+                <div key={box.id} className="action-card" style={{
+                  background: '#0a0a0a',
+                  border: '1px solid #1a1a1a',
+                  borderRadius: '16px',
+                  padding: '28px 24px',
+                  opacity: locked ? 0.55 : 1,
+                }}>
+                  <Link href={locked ? '/compte' : box.href} style={{ textDecoration: 'none', display: 'block' }}>
+                    <div className="action-icon" style={{ fontSize: '1.8rem', marginBottom: '14px' }}>
+                      {box.icon}
+                    </div>
                     <h2 style={{
-                      color: locked ? '#444' : '#00f2ff',
-                      fontSize: '1.25rem',
+                      color: locked ? '#333' : '#00f2ff',
+                      fontSize: '0.85rem',
                       fontWeight: 700,
-                      letterSpacing: '2px',
-                      marginBottom: '10px',
+                      letterSpacing: '2.5px',
+                      marginBottom: '8px',
                     }}>
                       {box.title}
                     </h2>
-                    <p style={{ color: '#888', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                    <p style={{ color: '#555', fontSize: '0.82rem', lineHeight: 1.6 }}>
                       {box.desc}
                     </p>
-                  </div>
-                </Link>
-                {locked && (
-                  <div style={{
-                    margin: '0 24px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: 'rgba(0,0,0,0.4)',
-                    border: '1px solid #222',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '0.78rem',
-                  }}>
-                    <span style={{ color: '#555' }}>🔒 Réservé aux abonnés</span>
-                    <Link href="/compte" style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 600 }}>
-                      S&apos;abonner →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  </Link>
+                  {locked && (
+                    <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#333', fontSize: '0.75rem' }}>🔒 Abonnés</span>
+                      <Link href="/compte" style={{ color: '#00f2ff', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
+                        S&apos;abonner →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-          {/* MON COMPTE */}
-          <div style={{
-            background: 'rgba(17,17,17,0.9)',
-            border: '2px solid rgba(168,85,247,0.4)',
-            borderRadius: '20px',
-            padding: '30px 24px',
-            boxShadow: '0 0 12px rgba(168,85,247,0.1)',
-          }}>
-            <Link href="/compte" style={{ textDecoration: 'none', display: 'block' }}>
-              <h2 style={{
-                color: '#a855f7',
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                letterSpacing: '2px',
-                marginBottom: '10px',
-              }}>
-                {profile ? `👤 ${profile.pseudo.toUpperCase()}` : 'MON COMPTE'}
+            {/* MON COMPTE */}
+            <div className="compte-card" style={{
+              background: '#0a0a0a',
+              border: '1px solid #1a1a1a',
+              borderRadius: '16px',
+              padding: '28px 24px',
+            }}>
+              <Link href="/compte" style={{ textDecoration: 'none', display: 'block' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '14px' }}>
+                  {profile ? '👤' : '🔑'}
+                </div>
+                <h2 style={{
+                  color: '#a855f7',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  letterSpacing: '2.5px',
+                  marginBottom: '8px',
+                }}>
+                  {profile ? profile.pseudo.toUpperCase() : 'MON COMPTE'}
+                </h2>
+                <p style={{ color: '#555', fontSize: '0.82rem', lineHeight: 1.6 }}>
+                  {profile && subscribed
+                    ? '⭐ Abonnement actif'
+                    : profile
+                    ? 'Activez votre abonnement.'
+                    : 'Connexion ou inscription.'}
+                </p>
+              </Link>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ── CATALOGUE ── */}
+        <div style={{ borderTop: '1px solid #111', padding: '60px 20px 80px' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <h2 style={{ fontSize: '0.75rem', letterSpacing: '4px', color: '#333', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Catalogue
               </h2>
-              <p style={{ color: '#888', fontSize: '0.875rem', lineHeight: 1.6 }}>
-                {profile && subscribed
-                  ? '⭐ Abonnement actif — gérer mon profil'
-                  : profile
-                  ? 'Gérez votre profil et activez votre abonnement.'
-                  : 'Créez un compte ou connectez-vous pour accéder à tout le contenu.'}
-              </p>
-            </Link>
+              <form>
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Rechercher un titre…"
+                  className="search-input"
+                  style={{
+                    background: '#0a0a0a',
+                    border: '1px solid #1a1a1a',
+                    borderRadius: '24px',
+                    padding: '10px 20px',
+                    color: '#fff',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    width: '100%',
+                    maxWidth: '400px',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                  }}
+                />
+              </form>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+              {q.length >= 3 ? (
+                <Suspense fallback={<p style={{ color: '#333', textAlign: 'center' }}>Recherche…</p>}>
+                  <SearchResults q={q} />
+                </Suspense>
+              ) : (
+                <>
+                  <Suspense fallback={<div style={{ height: '180px', background: '#0a0a0a', borderRadius: '12px' }} />}>
+                    <CatalogueSection kind="manga" label="Mangas" icon="📖" q={q} />
+                  </Suspense>
+                  <Suspense fallback={<div style={{ height: '180px', background: '#0a0a0a', borderRadius: '12px' }} />}>
+                    <CatalogueSection kind="webtoon" label="Webtoons" icon="📱" q={q} />
+                  </Suspense>
+                  <Suspense fallback={<div style={{ height: '180px', background: '#0a0a0a', borderRadius: '12px' }} />}>
+                    <CatalogueSection kind="bd" label="BD" icon="🎨" q={q} />
+                  </Suspense>
+                </>
+              )}
+            </div>
+
           </div>
         </div>
+
       </div>
-
-      {/* ── CATALOGUE DÉCOUVERTE ── */}
-      <div style={{
-        background: '#0a0a0a',
-        borderTop: '1px solid #1e1e1e',
-        padding: '60px 20px',
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <h2 style={{
-            textAlign: 'center',
-            fontSize: '1.3rem',
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: '3px',
-            marginBottom: '8px',
-          }}>
-            CATALOGUE
-          </h2>
-          <p style={{ textAlign: 'center', color: '#555', fontSize: '0.85rem', marginBottom: '40px' }}>
-            Parcourez nos mangas, webtoons et BD
-          </p>
-
-          {/* Barre de recherche */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '48px' }}>
-            <form style={{ width: '100%', maxWidth: '480px' }}>
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder="Rechercher un titre…"
-                style={{
-                  width: '100%',
-                  background: '#111',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: '30px',
-                  padding: '12px 20px',
-                  color: '#fff',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                }}
-              />
-            </form>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-            {q.length >= 3 ? (
-              <Suspense fallback={<p style={{ color: '#555', textAlign: 'center' }}>Recherche en cours…</p>}>
-                <SearchResults q={q} />
-              </Suspense>
-            ) : (
-              <>
-                <Suspense fallback={<div style={{ height: '200px', background: '#111', borderRadius: '12px' }} />}>
-                  <CatalogueSection kind="manga" label="Mangas" icon="📖" q={q} />
-                </Suspense>
-                <Suspense fallback={<div style={{ height: '200px', background: '#111', borderRadius: '12px' }} />}>
-                  <CatalogueSection kind="webtoon" label="Webtoons" icon="📱" q={q} />
-                </Suspense>
-                <Suspense fallback={<div style={{ height: '200px', background: '#111', borderRadius: '12px' }} />}>
-                  <CatalogueSection kind="bd" label="BD" icon="🎨" q={q} />
-                </Suspense>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
