@@ -8,37 +8,75 @@ type TableauRow = Pick<
 
 export function TableauCard({ tableau }: { tableau: TableauRow }) {
   return (
-    <article className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative aspect-square bg-gray-100">
+    <article style={{
+      background: '#0d0d0d',
+      border: '1px solid #1e1e1e',
+      borderRadius: '14px',
+      overflow: 'hidden',
+      transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
+    }} className="tableau-card">
+      <div style={{ position: 'relative', aspectRatio: '1/1', background: '#111' }}>
         <Image
           src={tableau.thumbnail}
           alt={tableau.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          style={{ objectFit: 'cover', transition: 'transform 0.3s' }}
+          className="tableau-card-img"
         />
         {!tableau.available && (
-          <span className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white text-sm font-medium bg-black/60 px-3 py-1 rounded-full">
+          <span style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{
+              color: '#fff',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              background: 'rgba(0,0,0,0.7)',
+              padding: '6px 16px',
+              borderRadius: '20px',
+              border: '1px solid #333',
+            }}>
               Vendu
             </span>
           </span>
         )}
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{tableau.title}</h3>
+      <div style={{ padding: '14px 16px' }}>
+        <h3 style={{ fontWeight: 600, color: '#e0e0e0', fontSize: '0.9rem', marginBottom: '4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+          {tableau.title}
+        </h3>
         {tableau.artist && (
-          <p className="text-xs text-gray-500 mt-0.5">{tableau.artist}</p>
+          <p style={{ fontSize: '0.75rem', color: '#555', marginBottom: '4px' }}>{tableau.artist}</p>
         )}
         {tableau.description && (
-          <p className="mt-2 text-xs text-gray-500 line-clamp-2">{tableau.description}</p>
+          <p style={{
+            fontSize: '0.75rem', color: '#555', lineHeight: 1.5,
+            overflow: 'hidden', display: '-webkit-box',
+            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            marginBottom: '8px',
+          }}>
+            {tableau.description}
+          </p>
         )}
         {tableau.price_eur != null && (
-          <p className="mt-3 text-sm font-semibold text-indigo-600">
+          <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#00f2ff', marginTop: '8px' }}>
             {tableau.price_eur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </p>
         )}
       </div>
+      <style>{`
+        .tableau-card:hover {
+          border-color: rgba(0,242,255,0.4) !important;
+          box-shadow: 0 4px 20px rgba(0,242,255,0.1);
+          transform: translateY(-3px);
+        }
+        .tableau-card:hover .tableau-card-img {
+          transform: scale(1.05);
+        }
+      `}</style>
     </article>
   );
 }
