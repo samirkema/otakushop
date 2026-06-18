@@ -1,10 +1,14 @@
-// TODO Phase 5 : CRUD tableaux + upload
+import { createServiceClient } from '@/lib/supabase/server';
+import { TableauxAdminPanel } from '@/components/admin/TableauxAdminPanel';
 
-export default function AdminTableauxPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Tableaux</h1>
-      <p className="text-gray-500">Interface de gestion disponible en Phase 5.</p>
-    </div>
-  );
+export default async function AdminTableauxPage() {
+  const svc = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: tableaux } = await (svc as any)
+    .from('tableaux')
+    .select('id, title, artist, thumbnail, price_eur, available, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  return <TableauxAdminPanel initialTableaux={tableaux ?? []} />;
 }

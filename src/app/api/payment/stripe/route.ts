@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+if (!process.env.NEXT_PUBLIC_APP_URL) {
+  console.warn('[stripe] NEXT_PUBLIC_APP_URL non configuré — fallback localhost utilisé');
+}
 
 // POST /api/payment/stripe — crée une session Stripe Checkout (paiement unique, accès 30 jours).
 // Body : { priceId: string }
@@ -42,6 +45,10 @@ export async function POST(request: Request) {
     metadata: { userId: user.id },
     customer_email: user.email ?? undefined,
   });
+
+  if (!session.url) {
+    return NextResponse.json({ error: 'Session Stripe invalide — URL manquante' }, { status: 500 });
+  }
 
   return NextResponse.json({ url: session.url });
 }

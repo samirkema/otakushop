@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createHash }   from 'crypto';
 import bcryptjs         from 'bcryptjs';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { sendSubscriptionConfirmation } from '@/lib/email';
 
 // Limites de rate limiting
 const MAX_ATTEMPTS_PER_USER_24H = 5;
@@ -23,7 +24,20 @@ export async function POST(request: Request) {
   const window24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const window1h  = new Date(Date.now() -      3600 * 1000).toISOString();
 
-  // Vérification rate limiting (lecture via service_role — RLS désactivée pour cette table)
+  // Enregistre la tentative EN PREMIER — avant la vérification des compteurs.
+  // Cela élimine la race condition TOCTOU : même si deux requêtes arrivent simultanément,
+  // elles s'insèrent toutes les deux, et le compteur post-insertion reflète la réalité.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: insertError } = await (svc as any)
+    .from('activation_attempts')
+    .insert({ user_id: user.id, ip_hash: ipHash });
+
+  if (insertError) {
+    console.error('[subscription/activate] insertion tentative:', insertError.message);
+    return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
+  }
+
+  // Vérification rate limiting APRÈS insertion (compteurs incluent la tentative courante)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [{ count: userCount }, { count: ipCount }] = await Promise.all([
     (svc as any)
@@ -38,13 +52,16 @@ export async function POST(request: Request) {
       .gte('attempted_at', window1h),
   ]);
 
-  if ((userCount ?? 0) >= MAX_ATTEMPTS_PER_USER_24H) {
+  // Utiliser > (strict) car le compteur inclut déjà la tentative courante.
+  // Sémantique identique à l'ancienne garde >= avec insert-après :
+  // MAX_ATTEMPTS autorisés, le suivant est bloqué.
+  if ((userCount ?? 0) > MAX_ATTEMPTS_PER_USER_24H) {
     return NextResponse.json(
       { error: 'Trop de tentatives. Réessayez dans 24h.' },
       { status: 429 },
     );
   }
-  if ((ipCount ?? 0) >= MAX_ATTEMPTS_PER_IP_1H) {
+  if ((ipCount ?? 0) > MAX_ATTEMPTS_PER_IP_1H) {
     return NextResponse.json(
       { error: 'Trop de tentatives. Réessayez dans 1h.' },
       { status: 429 },
@@ -63,10 +80,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'code requis' }, { status: 400 });
   }
 
-  // Enregistre la tentative avant la comparaison (anti-brute-force même en cas d'erreur)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (svc as any).from('activation_attempts').insert({ user_id: user.id, ip_hash: ipHash });
-
   const hash = process.env.ACTIVATION_CODE_HASH;
   if (!hash) {
     console.error('[subscription/activate] ACTIVATION_CODE_HASH non configuré');
@@ -84,17 +97,26 @@ export async function POST(request: Request) {
   expiresAt.setDate(expiresAt.getDate() + days);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (svc as any)
+  const { data: profileData, error } = await (svc as any)
     .from('profiles')
     .update({
       subscription_tier:       'subscriber',
       subscription_expires_at: expiresAt.toISOString(),
     })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .select('pseudo')
+    .single();
 
   if (error) {
     console.error('[subscription/activate] profile update:', error.message);
     return NextResponse.json({ error: 'Erreur activation' }, { status: 500 });
+  }
+
+  const email  = user.email ?? null;
+  const pseudo = (profileData as { pseudo?: string } | null)?.pseudo ?? 'abonné';
+  if (email) {
+    sendSubscriptionConfirmation({ to: email, pseudo, expiresAt })
+      .catch(err => console.error('[subscription/activate] email confirmation:', err));
   }
 
   return NextResponse.json({ ok: true, expiresAt: expiresAt.toISOString() });

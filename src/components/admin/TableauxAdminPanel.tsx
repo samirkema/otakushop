@@ -1,0 +1,178 @@
+'use client';
+
+import { useState } from 'react';
+import { UploadZone } from './UploadZone';
+
+interface Tableau {
+  id:         string;
+  title:      string;
+  artist:     string | null;
+  thumbnail:  string;
+  price_eur:  number | null;
+  available:  boolean;
+  created_at: string;
+}
+
+interface Props { initialTableaux: Tableau[] }
+
+export function TableauxAdminPanel({ initialTableaux }: Props) {
+  const [items,       setItems]     = useState<Tableau[]>(initialTableaux);
+  const [showForm,    setShowForm]  = useState(false);
+  const [title,       setTitle]     = useState('');
+  const [artist,      setArtist]    = useState('');
+  const [description, setDesc]      = useState('');
+  const [priceEur,    setPriceEur]  = useState('');
+  const [uploadedMain,   setMain]   = useState('');
+  const [uploadedThumb,  setThumb]  = useState('');
+  const [uploadedTid,    setTid]    = useState('');
+  const [saving,      setSaving]    = useState(false);
+  const [formErr,     setFormErr]   = useState<string | null>(null);
+
+  async function createTableau() {
+    if (!title.trim()) { setFormErr('Le titre est requis'); return; }
+    if (!uploadedMain) { setFormErr('Une image est requise'); return; }
+    setSaving(true); setFormErr(null);
+    try {
+      const res = await fetch('/api/admin/tableaux', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title, artist: artist || null, description: description || null,
+          main_image: uploadedMain, thumbnail: uploadedThumb,
+          price_eur: priceEur ? parseFloat(priceEur) : null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setFormErr(json.error ?? 'Erreur'); return; }
+      setItems([json.tableau, ...items]);
+      setTitle(''); setArtist(''); setDesc(''); setPriceEur('');
+      setMain(''); setThumb(''); setTid(''); setShowForm(false);
+    } catch { setFormErr('Erreur réseau'); }
+    finally { setSaving(false); }
+  }
+
+  async function toggleAvailable(item: Tableau) {
+    const res = await fetch(`/api/admin/tableaux/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ available: !item.available }),
+    });
+    if (res.ok) setItems(items.map(t => t.id === item.id ? { ...t, available: !t.available } : t));
+  }
+
+  async function deleteTableau(id: string) {
+    if (!confirm('Supprimer ce tableau ?')) return;
+    const res = await fetch(`/api/admin/tableaux/${id}`, { method: 'DELETE' });
+    if (res.ok) setItems(items.filter(t => t.id !== id));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Gestion des Tableaux</h1>
+        <button onClick={() => { setShowForm(!showForm); setFormErr(null); }}
+          className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+          {showForm ? 'Annuler' : '+ Nouveau tableau'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <h2 className="text-base font-semibold text-gray-900">Nouveau tableau</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-700">Titre *</label>
+              <input value={title} onChange={e => setTitle(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-700">Artiste</label>
+              <input value={artist} onChange={e => setArtist(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-700">Prix (€)</label>
+              <input type="number" min="0" step="0.01" value={priceEur} onChange={e => setPriceEur(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-xs font-medium text-gray-700">Description</label>
+              <textarea value={description} onChange={e => setDesc(e.target.value)} rows={2}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+            </div>
+          </div>
+          {uploadedMain
+            ? <p className="text-xs text-green-600">Image uploadée ✓ (thumbnail généré)</p>
+            : (
+              <UploadZone
+                type="tableau"
+                tableauId={uploadedTid || undefined}
+                label="Image du tableau — WebP + thumbnail générés automatiquement"
+                onUpload={(r) => {
+                  if (r.type === 'tableau') {
+                    setMain(r.url); setThumb(r.thumbnailUrl); setTid(r.tableauId);
+                  }
+                }}
+              />
+            )
+          }
+          {formErr && <p className="text-sm text-red-600">{formErr}</p>}
+          <button onClick={createTableau} disabled={saving}
+            className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+            {saving ? 'Création…' : 'Créer le tableau'}
+          </button>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase w-16">Thumb</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Titre</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Artiste</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Prix</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {items.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">Aucun tableau</td></tr>
+            )}
+            {items.map(t => (
+              <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3">
+                  {t.thumbnail && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={t.thumbnail} alt="" className="w-12 h-8 object-cover rounded" />
+                  )}
+                </td>
+                <td className="px-4 py-3 font-medium text-gray-900">{t.title}</td>
+                <td className="px-4 py-3 text-gray-500">{t.artist ?? '—'}</td>
+                <td className="px-4 py-3 text-right text-gray-700">
+                  {t.price_eur != null ? `${t.price_eur.toFixed(2)} €` : '—'}
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    t.available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {t.available ? 'Disponible' : 'Indisponible'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button onClick={() => toggleAvailable(t)} className="text-xs text-indigo-600 hover:underline">
+                    {t.available ? 'Désactiver' : 'Activer'}
+                  </button>
+                  <button onClick={() => deleteTableau(t.id)} className="text-xs text-red-500 hover:underline">
+                    Suppr.
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

@@ -12,8 +12,8 @@ export async function checkNftOwnership(walletAddress: string): Promise<boolean>
 
   const res = await fetch(url.toString(), {
     headers: { Accept: 'application/json' },
-    // Désactive le cache Next.js : chaque appel doit refléter l'état en temps réel.
     cache: 'no-store',
+    signal: AbortSignal.timeout(8_000),
   });
 
   if (!res.ok) {

@@ -6,6 +6,14 @@ export type SubscriptionTier = 'free' | 'subscriber' | 'nft';
 export type MangaKind = 'manga' | 'webtoon' | 'bd';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
+export interface DisplayConfig {
+  theme?:           'dark' | 'light' | 'sepia';
+  backgroundColor?: string;
+  accentColor?:     string;
+  pageGap?:         'compact' | 'normal' | 'spacious';
+  maxWidth?:        'narrow' | 'medium' | 'wide';
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -31,7 +39,7 @@ export type Database = {
           cover_url: string | null;
           kind: MangaKind;
           language: string;
-          display_config: Record<string, unknown> | null;
+          display_config: DisplayConfig | null;
           published: boolean;
           views_count: number;
           search_vector: string | null;

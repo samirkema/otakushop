@@ -2,14 +2,45 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { MangaKind } from '@/lib/supabase/types';
+import type { MangaKind, DisplayConfig } from '@/lib/supabase/types';
+
+const MAX_WIDTHS: Record<string, string> = {
+  narrow: 'max-w-lg',
+  medium: 'max-w-2xl',
+  wide:   'max-w-4xl',
+};
+
+const THEME_BG: Record<string, string> = {
+  dark:  '#0a0a0f',
+  light: '#ffffff',
+  sepia: '#f4ecd8',
+};
+
+const PAGE_GAPS: Record<string, string> = {
+  compact:  '',
+  normal:   'gap-2',
+  spacious: 'gap-6',
+};
+
+function resolveReaderStyle(cfg: DisplayConfig | null | undefined): React.CSSProperties {
+  if (!cfg) return {};
+  return {
+    ...(cfg.backgroundColor
+      ? { backgroundColor: cfg.backgroundColor }
+      : cfg.theme
+        ? { backgroundColor: THEME_BG[cfg.theme] }
+        : {}),
+    ...(cfg.accentColor ? { '--reader-accent': cfg.accentColor } as React.CSSProperties : {}),
+  };
+}
 
 interface MangaReaderProps {
-  pages: string[];
-  kind: MangaKind;
-  workId: string;
-  initialPage: number;
-  title: string;
+  pages:         string[];
+  kind:          MangaKind;
+  workId:        string;
+  initialPage:   number;
+  title:         string;
+  displayConfig?: DisplayConfig | null;
 }
 
 // ─── Sauvegarde debounced ─────────────────────────────────────────────────────
@@ -45,11 +76,13 @@ function WebtoonReader({
   workId,
   initialPage,
   title,
+  displayConfig,
 }: {
   pages: string[];
   workId: string;
   initialPage: number;
   title: string;
+  displayConfig?: DisplayConfig | null;
 }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const containerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -90,10 +123,19 @@ function WebtoonReader({
     return () => observer.disconnect();
   }, [saveProgress]);
 
+  const maxWClass = MAX_WIDTHS[displayConfig?.maxWidth ?? 'medium'];
+  const gapClass  = PAGE_GAPS[displayConfig?.pageGap  ?? 'compact'] ?? '';
+
   return (
-    <div className="flex flex-col items-center bg-gray-950">
+    <div
+      className={`flex flex-col items-center bg-gray-950 ${gapClass}`}
+      style={resolveReaderStyle(displayConfig)}
+    >
       {/* Barre de progression */}
-      <div className="sticky top-14 z-30 w-full bg-gray-900/90 backdrop-blur-sm text-center py-1.5 text-xs text-gray-400">
+      <div
+        className="sticky top-14 z-30 w-full bg-gray-900/90 backdrop-blur-sm text-center py-1.5 text-xs"
+        style={{ color: 'var(--reader-accent, #9ca3af)' }}
+      >
         {title} — {currentPage} / {pages.length}
       </div>
 
@@ -101,7 +143,7 @@ function WebtoonReader({
         <div
           key={i}
           ref={(el) => { containerRefs.current[i] = el; }}
-          className="w-full max-w-2xl"
+          className={`w-full ${maxWClass}`}
         >
           <Image
             src={url}
@@ -127,11 +169,13 @@ function PageReader({
   workId,
   initialPage,
   title,
+  displayConfig,
 }: {
   pages: string[];
   workId: string;
   initialPage: number;
   title: string;
+  displayConfig?: DisplayConfig | null;
 }) {
   const [current, setCurrent] = useState(Math.max(1, Math.min(initialPage, pages.length)));
   const saveProgress = useSaveProgress(workId);
@@ -159,8 +203,13 @@ function PageReader({
 
   const url = pages[current - 1];
 
+  const maxWClass = MAX_WIDTHS[displayConfig?.maxWidth ?? 'medium'];
+
   return (
-    <div className="flex flex-col items-center bg-gray-950 min-h-screen">
+    <div
+      className="flex flex-col items-center bg-gray-950 min-h-screen"
+      style={resolveReaderStyle(displayConfig)}
+    >
       {/* Barre de navigation */}
       <div className="sticky top-14 z-30 w-full bg-gray-900/90 backdrop-blur-sm flex items-center justify-between px-4 py-2 text-sm text-gray-300">
         <button
@@ -171,7 +220,9 @@ function PageReader({
         >
           ← Préc.
         </button>
-        <span className="tabular-nums">{title} — {current} / {total}</span>
+        <span className="tabular-nums" style={{ color: 'var(--reader-accent, #d1d5db)' }}>
+          {title} — {current} / {total}
+        </span>
         <button
           onClick={() => goTo(current + 1)}
           disabled={current === total}
@@ -183,7 +234,7 @@ function PageReader({
       </div>
 
       {/* Page courante */}
-      <div className="w-full max-w-2xl px-0 py-0 flex-1 flex items-start justify-center">
+      <div className={`w-full ${maxWClass} px-0 py-0 flex-1 flex items-start justify-center`}>
         <Image
           src={url}
           alt={`${title} — page ${current}`}
@@ -220,7 +271,7 @@ function PageReader({
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-export function MangaReader({ pages, kind, workId, initialPage, title }: MangaReaderProps) {
+export function MangaReader({ pages, kind, workId, initialPage, title, displayConfig }: MangaReaderProps) {
   if (kind === 'webtoon') {
     return (
       <WebtoonReader
@@ -228,6 +279,7 @@ export function MangaReader({ pages, kind, workId, initialPage, title }: MangaRe
         workId={workId}
         initialPage={initialPage}
         title={title}
+        displayConfig={displayConfig}
       />
     );
   }
@@ -238,6 +290,7 @@ export function MangaReader({ pages, kind, workId, initialPage, title }: MangaRe
       workId={workId}
       initialPage={initialPage}
       title={title}
+      displayConfig={displayConfig}
     />
   );
 }

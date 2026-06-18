@@ -9,6 +9,7 @@ import { isSubscriber } from '@/lib/roles';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getMangaPageUrl } from '@/lib/supabase/storage';
 import { MangaReader } from '@/components/manga/MangaReader';
+import type { DisplayConfig } from '@/lib/supabase/types';
 import { ResumePromptWrapper } from '@/components/manga/ResumePromptWrapper';
 import type { Database } from '@/lib/supabase/types';
 
@@ -17,7 +18,7 @@ type PageRow     = Database['public']['Tables']['manga_pages']['Row'];
 type ProgressRow = Database['public']['Tables']['reading_progress']['Row'];
 
 // Types locaux pour les casts post-requête (contournement du type inference partiel)
-type WorkSelect     = Pick<WorkRow,     'id' | 'title' | 'kind' | 'published'>;
+type WorkSelect     = Pick<WorkRow,     'id' | 'title' | 'kind' | 'published' | 'display_config'>;
 type PageSelect     = Pick<PageRow,     'page_number' | 'image_url'>;
 type ProgressSelect = Pick<ProgressRow, 'page_number'>;
 
@@ -59,7 +60,7 @@ export default async function MangaReaderPage({
   type ProgressRes = { data: ProgressSelect | null; error: { message: string } | null };
 
   const [rawWork, rawPages, rawProgress] = await Promise.all([
-    supabase.from('manga_works').select('id, title, kind, published').eq('id', workId).single(),
+    supabase.from('manga_works').select('id, title, kind, published, display_config').eq('id', workId).single(),
     supabase.from('manga_pages').select('page_number, image_url').eq('work_id', workId).order('page_number', { ascending: true }),
     supabase.from('reading_progress').select('page_number').eq('work_id', workId).eq('user_id', profile.id).maybeSingle(),
   ]);
@@ -116,6 +117,7 @@ export default async function MangaReaderPage({
         workId={workId}
         initialPage={hasProgress ? savedPage : 1}
         title={work.title}
+        displayConfig={work.display_config as DisplayConfig | null}
       />
     </>
   );

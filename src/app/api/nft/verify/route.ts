@@ -37,6 +37,10 @@ export async function POST(request: Request) {
     );
   }
 
+  if (message.length > 500) {
+    return NextResponse.json({ error: 'message trop long' }, { status: 400 });
+  }
+
   if (!ADDRESS_RE.test(walletAddress)) {
     return NextResponse.json({ error: 'walletAddress invalide' }, { status: 400 });
   }
