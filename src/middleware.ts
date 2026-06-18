@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { isAdmin, isSubscriber } from '@/lib/roles';
 import type { Database } from '@/lib/supabase/types';
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const res = NextResponse.next({ request: req });
 
   const supabase = createServerClient<Database>(
