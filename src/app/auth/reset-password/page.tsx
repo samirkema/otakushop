@@ -32,32 +32,32 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Mot de passe oublié</h1>
-          <p className="text-gray-500 text-sm mt-1">
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginBottom: '6px', letterSpacing: '1px' }}>Mot de passe oublié</h1>
+          <p style={{ color: '#555', fontSize: '0.875rem' }}>
             Saisissez votre email pour recevoir un lien de réinitialisation
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '16px', padding: '32px' }}>
           {sent ? (
-            <div className="text-center">
-              <p className="text-green-700 font-medium">Email envoyé !</p>
-              <p className="text-gray-500 text-sm mt-2">
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: '#00f2ff', fontWeight: 600, marginBottom: '8px' }}>Email envoyé !</p>
+              <p style={{ color: '#555', fontSize: '0.875rem', marginBottom: '16px' }}>
                 Vérifiez votre boîte mail. Le lien est valable 1 heure.
               </p>
-              <Link href="/auth/login" className="mt-4 inline-block text-indigo-600 text-sm hover:underline">
+              <Link href="/auth/login" style={{ color: '#00f2ff', fontSize: '0.875rem', textDecoration: 'none' }}>
                 Retour à la connexion
               </Link>
             </div>
           ) : (
             <>
               {toast && <Toast message={toast.message} type={toast.type} onClose={hide} />}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#888', marginBottom: '6px' }}>
                     Email
                   </label>
                   <input
@@ -67,14 +67,14 @@ export default function ResetPasswordPage() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="vous@exemple.com"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
                   />
                 </div>
                 <Button type="submit" loading={loading} className="w-full">
                   Envoyer le lien
                 </Button>
-                <p className="text-center text-sm">
-                  <Link href="/auth/login" className="text-indigo-600 hover:underline">
+                <p style={{ textAlign: 'center', fontSize: '0.8rem' }}>
+                  <Link href="/auth/login" style={{ color: '#00f2ff', textDecoration: 'none' }}>
                     Retour à la connexion
                   </Link>
                 </p>

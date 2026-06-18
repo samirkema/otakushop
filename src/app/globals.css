@@ -40,3 +40,16 @@ body {
   outline: 2px solid #00f2ff;
   outline-offset: 2px;
 }
+
+/* ── INPUTS DARK ── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+textarea,
+select {
+  background-color: #111;
+  color: #e0e0e0;
+  border-color: #2a2a2a;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #3a3a3a;
+}

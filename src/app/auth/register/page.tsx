@@ -4,13 +4,13 @@ export const metadata = { title: 'Inscription — Otaku Shop' };
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Créer un compte</h1>
-          <p className="text-gray-500 text-sm mt-1">Rejoignez la communauté Otaku Shop</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginBottom: '6px', letterSpacing: '1px' }}>Créer un compte</h1>
+          <p style={{ color: '#555', fontSize: '0.875rem' }}>Rejoignez la communauté Otaku Shop</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '16px', padding: '32px' }}>
           <RegisterForm />
         </div>
       </div>

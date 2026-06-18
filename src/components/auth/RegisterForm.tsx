@@ -42,10 +42,10 @@ export function RegisterForm() {
 
   if (done) {
     return (
-      <div className="rounded-lg bg-green-50 border border-green-200 p-6 text-center">
-        <p className="text-green-800 font-medium">Vérifiez votre boîte mail !</p>
-        <p className="text-green-700 text-sm mt-2">
-          Un lien de vérification a été envoyé à <strong>{email}</strong>.
+      <div style={{ background: 'rgba(0,242,255,0.05)', border: '1px solid rgba(0,242,255,0.2)', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+        <p style={{ color: '#00f2ff', fontWeight: 600, marginBottom: '8px' }}>Vérifiez votre boîte mail !</p>
+        <p style={{ color: '#666', fontSize: '0.875rem' }}>
+          Un lien de vérification a été envoyé à <strong style={{ color: '#aaa' }}>{email}</strong>.
           Cliquez dessus pour activer votre compte.
         </p>
       </div>
@@ -56,9 +56,9 @@ export function RegisterForm() {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hide} />}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
-          <label htmlFor="pseudo" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="pseudo" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#888', marginBottom: '6px' }}>
             Pseudo
           </label>
           <input
@@ -71,12 +71,12 @@ export function RegisterForm() {
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
             placeholder="VotrePseudo"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#888', marginBottom: '6px' }}>
             Email
           </label>
           <input
@@ -87,12 +87,12 @@ export function RegisterForm() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="vous@exemple.com"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#888', marginBottom: '6px' }}>
             Mot de passe
           </label>
           <input
@@ -104,7 +104,7 @@ export function RegisterForm() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             placeholder="8 caractères minimum"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
           />
         </div>
 
@@ -112,9 +112,9 @@ export function RegisterForm() {
           Créer mon compte
         </Button>
 
-        <p className="text-center text-sm text-gray-500">
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#555' }}>
           Déjà un compte ?{' '}
-          <Link href="/auth/login" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/auth/login" style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 600 }}>
             Se connecter
           </Link>
         </p>

@@ -63,9 +63,9 @@ export function LoginForm() {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hide} />}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: '#888', marginBottom: '6px' }}>
             Email
           </label>
           <input
@@ -76,16 +76,16 @@ export function LoginForm() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="vous@exemple.com"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
           />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <label htmlFor="password" style={{ fontSize: '0.8rem', fontWeight: 500, color: '#888' }}>
               Mot de passe
             </label>
-            <Link href="/auth/reset-password" className="text-xs text-indigo-600 hover:underline">
+            <Link href="/auth/reset-password" style={{ fontSize: '0.75rem', color: '#00f2ff', textDecoration: 'none' }}>
               Mot de passe oublié ?
             </Link>
           </div>
@@ -96,7 +96,7 @@ export function LoginForm() {
             autoComplete="current-password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #2a2a2a', padding: '10px 12px', fontSize: '0.875rem' }}
           />
         </div>
 
@@ -104,9 +104,9 @@ export function LoginForm() {
           Se connecter
         </Button>
 
-        <p className="text-center text-sm text-gray-500">
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#555' }}>
           Pas encore de compte ?{' '}
-          <Link href="/auth/register" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/auth/register" style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 600 }}>
             S&apos;inscrire
           </Link>
         </p>
