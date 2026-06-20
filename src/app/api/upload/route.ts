@@ -98,11 +98,33 @@ export async function POST(request: Request) {
   // ── Tableau (public → bucket tableaux/{tableauId}/) ──────────────────────────
   if (type === 'tableau') {
     const rawTableauId = (form.get('tableauId') as string | null)?.trim();
+    const rawSlot      = (form.get('slot')      as string | null)?.trim();
+
     if (rawTableauId && !UUID_RE.test(rawTableauId)) {
       return NextResponse.json({ error: 'tableauId invalide' }, { status: 400 });
     }
+    if (rawSlot && !UUID_RE.test(rawSlot)) {
+      return NextResponse.json({ error: 'slot invalide' }, { status: 400 });
+    }
+
     const tableauId = rawTableauId || crypto.randomUUID();
 
+    // ── Photo supplémentaire (slot fourni) — resize seul, pas de thumbnail ──
+    if (rawSlot) {
+      let extra: Buffer;
+      try {
+        extra = await sharp(buf).resize(1200, null, { withoutEnlargement: true }).webp({ quality: 90 }).toBuffer();
+      } catch {
+        return NextResponse.json({ error: 'Conversion WebP impossible — fichier image invalide' }, { status: 422 });
+      }
+      const extraPath = `${tableauId}/img-${rawSlot}.webp`;
+      const { error } = await svc.storage.from('tableaux').upload(extraPath, extra, { contentType: 'image/webp', upsert: true });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      const url = svc.storage.from('tableaux').getPublicUrl(extraPath).data.publicUrl;
+      return NextResponse.json({ url, tableauId });
+    }
+
+    // ── Image principale — main.webp + thumb.webp ────────────────────────────
     let main: Buffer, thumb: Buffer;
     try {
       [main, thumb] = await Promise.all([

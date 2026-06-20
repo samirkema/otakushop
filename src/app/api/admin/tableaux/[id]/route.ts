@@ -28,6 +28,11 @@ export async function PATCH(
   if (raw.price_eur   !== undefined) update.price_eur   = raw.price_eur != null ? Number(raw.price_eur) : null;
   if (raw.price_btc   !== undefined) update.price_btc   = raw.price_btc != null ? Number(raw.price_btc) : null;
   if (raw.available   !== undefined) update.available   = Boolean(raw.available);
+  if (raw.images      !== undefined) {
+    update.images = Array.isArray(raw.images)
+      ? (raw.images as unknown[]).map(String).filter(Boolean)
+      : null;
+  }
   if (raw.formats     !== undefined) {
     type FormatEntry = { label: string; price_eur: number };
     const formats: FormatEntry[] = Array.isArray(raw.formats)

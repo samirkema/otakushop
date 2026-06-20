@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { ImageGallery } from '@/components/galerie/ImageGallery';
 
 export const metadata = { title: 'Galerie — Otaku Shop' };
 
@@ -16,7 +17,7 @@ export default async function GalerieDetailPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: raw } = await (supabase as any)
     .from('tableaux')
-    .select('id, title, thumbnail, main_image, price_eur, formats, created_at')
+    .select('id, title, thumbnail, main_image, price_eur, formats, images, created_at')
     .eq('id', id)
     .eq('available', true)
     .single();
@@ -24,7 +25,7 @@ export default async function GalerieDetailPage({
   if (!raw) notFound();
 
   type FormatEntry = { label: string; price_eur: number };
-  type TableauRow = { id: string; title: string; thumbnail: string; main_image: string; price_eur: number | null; formats: FormatEntry[] | null; created_at: string };
+  type TableauRow = { id: string; title: string; thumbnail: string; main_image: string; price_eur: number | null; formats: FormatEntry[] | null; images: string[] | null; created_at: string };
   const row = raw as TableauRow;
 
   // thumbnail / main_image peut être une URL complète ou un path storage
@@ -41,6 +42,12 @@ export default async function GalerieDetailPage({
   const formats: FormatEntry[] = Array.isArray(row.formats) && row.formats.length > 0
     ? row.formats
     : [];
+
+  // Toutes les images dans l'ordre : principale d'abord, puis supplémentaires
+  const extraImages: string[] = Array.isArray(row.images)
+    ? (row.images as string[]).map(resolveStorageUrl).filter(Boolean)
+    : [];
+  const allImages = [imgSrc, ...extraImages];
 
   const tableau = { ...row, thumbnail: thumbnailUrl, main_image: mainImageUrl };
 
@@ -70,17 +77,12 @@ export default async function GalerieDetailPage({
             ← Retour à la galerie
           </Link>
 
-          {/* IMAGE */}
+          {/* GALERIE D'IMAGES */}
           <div style={{
             background: '#0a0a0a', border: '1px solid #1a1a1a',
             borderRadius: '18px', overflow: 'hidden', marginBottom: '24px',
           }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imgSrc}
-              alt={tableau.title}
-              style={{ width: '100%', display: 'block', maxHeight: '70vh', objectFit: 'contain', background: '#050505' }}
-            />
+            <ImageGallery images={allImages} title={tableau.title} />
           </div>
 
           {/* INFOS + COMMANDE */}

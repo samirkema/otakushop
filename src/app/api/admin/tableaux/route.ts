@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error, count } = await (svc as any)
     .from('tableaux')
-    .select('id, title, artist, thumbnail, price_eur, formats, available, created_at', { count: 'exact' })
+    .select('id, title, artist, thumbnail, price_eur, formats, images, available, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -52,6 +52,10 @@ export async function POST(request: Request) {
       ? Math.min(...formats.map(f => f.price_eur))
       : (b.price_eur != null ? Number(b.price_eur) : null);
 
+    const extraImages: string[] = Array.isArray(b.images)
+      ? (b.images as unknown[]).map(String).filter(Boolean)
+      : [];
+
     const svc = createServiceClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (svc as any)
@@ -64,10 +68,11 @@ export async function POST(request: Request) {
         thumbnail:   String(b.thumbnail),
         price_eur:   priceEur,
         formats:     formats.length > 0 ? formats : null,
+        images:      extraImages.length > 0 ? extraImages : null,
         available:   b.available !== false,
         created_by:  guard.userId,
       })
-      .select('id, title, artist, thumbnail, price_eur, formats, available')
+      .select('id, title, artist, thumbnail, price_eur, formats, images, available')
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
