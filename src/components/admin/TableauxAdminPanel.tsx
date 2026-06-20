@@ -3,15 +3,23 @@
 import { useState } from 'react';
 import { UploadZone } from './UploadZone';
 
+interface FormatEntry {
+  label:     string;
+  price_eur: number;
+}
+
 interface Tableau {
   id:         string;
   title:      string;
   artist:     string | null;
   thumbnail:  string;
   price_eur:  number | null;
+  formats:    FormatEntry[] | null;
   available:  boolean;
   created_at: string;
 }
+
+interface FormatInput { label: string; price_eur: string }
 
 interface Props { initialTableaux: Tableau[] }
 
@@ -21,16 +29,39 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
   const [title,       setTitle]     = useState('');
   const [artist,      setArtist]    = useState('');
   const [description, setDesc]      = useState('');
-  const [priceEur,    setPriceEur]  = useState('');
-  const [uploadedMain,   setMain]   = useState('');
-  const [uploadedThumb,  setThumb]  = useState('');
-  const [uploadedTid,    setTid]    = useState('');
+  const [formats,     setFormats]   = useState<FormatInput[]>([{ label: '', price_eur: '' }]);
+  const [uploadedMain,  setMain]    = useState('');
+  const [uploadedThumb, setThumb]   = useState('');
+  const [uploadedTid,   setTid]     = useState('');
   const [saving,      setSaving]    = useState(false);
   const [formErr,     setFormErr]   = useState<string | null>(null);
+
+  function addFormat() {
+    setFormats(prev => [...prev, { label: '', price_eur: '' }]);
+  }
+  function removeFormat(i: number) {
+    setFormats(prev => prev.length <= 1 ? prev : prev.filter((_, j) => j !== i));
+  }
+  function updateFormat(i: number, field: keyof FormatInput, value: string) {
+    setFormats(prev => prev.map((f, j) => j === i ? { ...f, [field]: value } : f));
+  }
+
+  function resetForm() {
+    setTitle(''); setArtist(''); setDesc('');
+    setFormats([{ label: '', price_eur: '' }]);
+    setMain(''); setThumb(''); setTid('');
+    setFormErr(null);
+  }
 
   async function createTableau() {
     if (!title.trim()) { setFormErr('Le titre est requis'); return; }
     if (!uploadedMain) { setFormErr('Une image est requise'); return; }
+
+    const validFormats = formats
+      .filter(f => f.label.trim() && f.price_eur.trim())
+      .map(f => ({ label: f.label.trim(), price_eur: parseFloat(f.price_eur) }))
+      .filter(f => Number.isFinite(f.price_eur) && f.price_eur > 0);
+
     setSaving(true); setFormErr(null);
     try {
       const res = await fetch('/api/admin/tableaux', {
@@ -39,16 +70,21 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
         body: JSON.stringify({
           title, artist: artist || null, description: description || null,
           main_image: uploadedMain, thumbnail: uploadedThumb,
-          price_eur: priceEur ? parseFloat(priceEur) : null,
+          formats: validFormats.length > 0 ? validFormats : null,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) { setFormErr(json.error ?? 'Erreur'); return; }
-      setItems([json.tableau, ...items]);
-      setTitle(''); setArtist(''); setDesc(''); setPriceEur('');
-      setMain(''); setThumb(''); setTid(''); setShowForm(false);
-    } catch { setFormErr('Erreur réseau'); }
-    finally { setSaving(false); }
+      let json: Record<string, unknown> = {};
+      try { json = await res.json(); } catch { /* non-JSON response */ }
+      if (!res.ok) {
+        setFormErr((json.error as string) ?? `Erreur ${res.status}`);
+        return;
+      }
+      setItems([json.tableau as Tableau, ...items]);
+      resetForm();
+      setShowForm(false);
+    } catch (err) {
+      setFormErr(`Erreur : ${err instanceof Error ? err.message : 'connexion impossible'}`);
+    } finally { setSaving(false); }
   }
 
   async function toggleAvailable(item: Tableau) {
@@ -70,7 +106,7 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Gestion des Tableaux</h1>
-        <button onClick={() => { setShowForm(!showForm); setFormErr(null); }}
+        <button onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}
           className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
           {showForm ? 'Annuler' : '+ Nouveau tableau'}
         </button>
@@ -79,6 +115,7 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
       {showForm && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="text-base font-semibold text-gray-900">Nouveau tableau</h2>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-700">Titre *</label>
@@ -90,17 +127,49 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
               <input value={artist} onChange={e => setArtist(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-700">Prix (€)</label>
-              <input type="number" min="0" step="0.01" value={priceEur} onChange={e => setPriceEur(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-            </div>
             <div className="space-y-1 sm:col-span-2">
               <label className="text-xs font-medium text-gray-700">Description</label>
               <textarea value={description} onChange={e => setDesc(e.target.value)} rows={2}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
             </div>
           </div>
+
+          {/* FORMATS */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700">Formats & Prix</label>
+            {formats.map((f, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  value={f.label}
+                  onChange={e => updateFormat(i, 'label', e.target.value)}
+                  placeholder="Ex : A4 (21×30 cm)"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number" min="0" step="0.01"
+                    value={f.price_eur}
+                    onChange={e => updateFormat(i, 'price_eur', e.target.value)}
+                    placeholder="Prix"
+                    className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <span className="text-xs text-gray-500">€</span>
+                </div>
+                <button
+                  onClick={() => removeFormat(i)}
+                  disabled={formats.length <= 1}
+                  className="text-red-400 hover:text-red-600 disabled:opacity-30 text-lg leading-none px-1"
+                  title="Supprimer ce format"
+                >×</button>
+              </div>
+            ))}
+            <button onClick={addFormat}
+              className="text-xs text-indigo-600 hover:underline">
+              + Ajouter un format
+            </button>
+          </div>
+
+          {/* IMAGE */}
           {uploadedMain
             ? <p className="text-xs text-green-600">Image uploadée ✓ (thumbnail généré)</p>
             : (
@@ -116,6 +185,7 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
               />
             )
           }
+
           {formErr && <p className="text-sm text-red-600">{formErr}</p>}
           <button onClick={createTableau} disabled={saving}
             className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
@@ -151,7 +221,14 @@ export function TableauxAdminPanel({ initialTableaux }: Props) {
                 <td className="px-4 py-3 font-medium text-gray-900">{t.title}</td>
                 <td className="px-4 py-3 text-gray-500">{t.artist ?? '—'}</td>
                 <td className="px-4 py-3 text-right text-gray-700">
-                  {t.price_eur != null ? `${t.price_eur.toFixed(2)} €` : '—'}
+                  {t.formats && t.formats.length > 0 ? (
+                    <span className="text-xs">
+                      {t.formats.length} format{t.formats.length > 1 ? 's' : ''}
+                      {t.price_eur != null && ` — à partir de ${t.price_eur.toFixed(2)} €`}
+                    </span>
+                  ) : t.price_eur != null ? (
+                    `${t.price_eur.toFixed(2)} €`
+                  ) : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${

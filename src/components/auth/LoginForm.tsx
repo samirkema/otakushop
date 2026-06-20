@@ -44,7 +44,7 @@ export function LoginForm() {
           <label htmlFor="password" style={{ fontSize: '0.8rem', fontWeight: 500, color: '#888' }}>
             Mot de passe
           </label>
-          <Link href="/auth/reset-password" style={{ fontSize: '0.75rem', color: '#00f2ff', textDecoration: 'none' }}>
+          <Link href="/auth/reset-password" style={{ fontSize: '0.75rem', color: '#f97316', textDecoration: 'none' }}>
             Mot de passe oublié ?
           </Link>
         </div>
@@ -64,7 +64,7 @@ export function LoginForm() {
 
       <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#555' }}>
         Pas encore de compte ?{' '}
-        <Link href="/auth/register" style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 600 }}>
+        <Link href="/auth/register" style={{ color: '#f97316', textDecoration: 'none', fontWeight: 600 }}>
           S&apos;inscrire
         </Link>
       </p>

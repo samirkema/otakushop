@@ -19,12 +19,12 @@ export default async function LoginPage({
 
         {registered && (
           <div style={{
-            background: 'rgba(0,242,255,0.05)',
-            border: '1px solid rgba(0,242,255,0.2)',
+            background: 'rgba(249,115,22,0.05)',
+            border: '1px solid rgba(249,115,22,0.2)',
             borderRadius: '10px',
             padding: '12px 16px',
             marginBottom: '20px',
-            color: '#00f2ff',
+            color: '#f97316',
             fontSize: '0.85rem',
             textAlign: 'center',
           }}>

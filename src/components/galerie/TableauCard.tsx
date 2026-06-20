@@ -62,15 +62,15 @@ export function TableauCard({ tableau }: { tableau: TableauRow }) {
           </p>
         )}
         {tableau.price_eur != null && (
-          <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#00f2ff', marginTop: '8px' }}>
+          <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f97316', marginTop: '8px' }}>
             {tableau.price_eur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </p>
         )}
       </div>
       <style>{`
         .tableau-card:hover {
-          border-color: rgba(0,242,255,0.4) !important;
-          box-shadow: 0 4px 20px rgba(0,242,255,0.1);
+          border-color: rgba(249,115,22,0.4) !important;
+          box-shadow: 0 4px 20px rgba(249,115,22,0.1);
           transform: translateY(-3px);
         }
         .tableau-card:hover .tableau-card-img {

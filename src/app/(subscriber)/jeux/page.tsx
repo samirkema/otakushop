@@ -38,7 +38,7 @@ export default async function JeuxPage() {
     <>
       <style>{`
         .game-card-available { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
-        .game-card-available:hover { border-color: rgba(0,242,255,0.5) !important; box-shadow: 0 0 24px rgba(0,242,255,0.12); transform: translateY(-3px); }
+        .game-card-available:hover { border-color: rgba(249,115,22,0.5) !important; box-shadow: 0 0 24px rgba(249,115,22,0.12); transform: translateY(-3px); }
       `}</style>
 
       <div style={{ background: '#000', minHeight: '100vh', color: '#fff', fontFamily: "'Segoe UI', sans-serif" }}>
@@ -56,7 +56,7 @@ export default async function JeuxPage() {
           }}>
             IMMERSION
           </h1>
-          <div style={{ width: '40px', height: '1px', background: '#00f2ff', margin: '0 auto 18px', opacity: 0.6 }} />
+          <div style={{ width: '40px', height: '1px', background: '#f97316', margin: '0 auto 18px', opacity: 0.6 }} />
           <p style={{ color: '#444', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
             Exprimez votre talent, affrontez la communauté et vivez l&apos;univers Otaku Shop.
           </p>
@@ -99,7 +99,7 @@ export default async function JeuxPage() {
 function GameCardContent({ game }: { game: typeof GAMES[number] }) {
   return (
     <>
-      <div style={{ fontSize: '2rem', marginBottom: '16px' }}>{game.icon}</div>
+      <div style={{ fontSize: '2rem', marginBottom: '16px' }}><span className="emoji">{game.icon}</span></div>
       <div style={{
         display: 'inline-block',
         fontSize: '0.65rem',
@@ -108,9 +108,9 @@ function GameCardContent({ game }: { game: typeof GAMES[number] }) {
         padding: '3px 10px',
         borderRadius: '20px',
         marginBottom: '12px',
-        background: game.available ? 'rgba(0,242,255,0.08)' : 'rgba(80,80,80,0.1)',
-        color: game.available ? '#00f2ff' : '#444',
-        border: `1px solid ${game.available ? 'rgba(0,242,255,0.2)' : '#222'}`,
+        background: game.available ? 'rgba(249,115,22,0.08)' : 'rgba(80,80,80,0.1)',
+        color: game.available ? '#f97316' : '#444',
+        border: `1px solid ${game.available ? 'rgba(249,115,22,0.2)' : '#222'}`,
       }}>
         {game.tag}
       </div>
@@ -137,7 +137,7 @@ function GameCardContent({ game }: { game: typeof GAMES[number] }) {
         </div>
       )}
       {game.available && (
-        <p style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', color: '#00f2ff' }}>
+        <p style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', color: '#f97316' }}>
           JOUER →
         </p>
       )}

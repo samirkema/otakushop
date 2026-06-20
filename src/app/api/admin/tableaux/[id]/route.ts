@@ -28,6 +28,18 @@ export async function PATCH(
   if (raw.price_eur   !== undefined) update.price_eur   = raw.price_eur != null ? Number(raw.price_eur) : null;
   if (raw.price_btc   !== undefined) update.price_btc   = raw.price_btc != null ? Number(raw.price_btc) : null;
   if (raw.available   !== undefined) update.available   = Boolean(raw.available);
+  if (raw.formats     !== undefined) {
+    type FormatEntry = { label: string; price_eur: number };
+    const formats: FormatEntry[] = Array.isArray(raw.formats)
+      ? (raw.formats as Array<Record<string, unknown>>)
+          .filter(f => f && typeof f.label === 'string' && f.label.trim() && Number.isFinite(Number(f.price_eur)))
+          .map(f => ({ label: String(f.label).trim(), price_eur: Number(f.price_eur) }))
+      : [];
+    update.formats   = formats.length > 0 ? formats : null;
+    if (formats.length > 0) {
+      update.price_eur = Math.min(...formats.map(f => f.price_eur));
+    }
+  }
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Aucun champ à modifier' }, { status: 400 });

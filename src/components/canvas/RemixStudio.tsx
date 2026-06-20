@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 import { useCanvas, type CanvasState } from './useCanvas';
 import { DrawingCanvas } from './DrawingCanvas';
 import { Toolbar } from './Toolbar';
@@ -22,16 +21,33 @@ const DEFAULT_STATE: CanvasState = { tool: 'pen', color: '#000000', brushSize: 5
 export function RemixStudio({ tableaux, onCreated }: Props) {
   const {
     canvasRef, startDraw, draw, endDraw, undo, clear, getBlob,
-    canUndo, zoom, resetZoom, hasDrawnRef,
+    canUndo, zoom, resetZoom, hasDrawnRef, loadPhoto, photoLoading,
   } = useCanvas();
   const [toolState, setToolState] = useState<CanvasState>(DEFAULT_STATE);
   const [photoId,   setPhotoId]   = useState(tableaux[0]?.id ?? '');
   const [sharing,   setSharing]   = useState(false);
   const [msg,       setMsg]       = useState<{ ok: boolean; text: string } | null>(null);
+  const mountedRef  = useRef(false);
+
+  // Charge la photo sur le canvas à chaque changement de sélection
+  useEffect(() => {
+    if (!photoId) return;
+    const tableau = tableaux.find(t => t.id === photoId);
+    if (!tableau) return;
+
+    if (!mountedRef.current) {
+      // Premier rendu — attendre que le canvas soit monté
+      const timer = setTimeout(() => { loadPhoto(tableau.thumbnail); }, 50);
+      mountedRef.current = true;
+      return () => clearTimeout(timer);
+    }
+    loadPhoto(tableau.thumbnail);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoId]);
 
   async function share() {
     if (!photoId) {
-      setMsg({ ok: false, text: 'Sélectionnez un tableau à remixer.' });
+      setMsg({ ok: false, text: 'Sélectionnez une photo à remixer.' });
       return;
     }
     if (!hasDrawnRef.current) {
@@ -61,49 +77,61 @@ export function RemixStudio({ tableaux, onCreated }: Props) {
       return;
     }
 
-    setMsg({ ok: true, text: 'Remix partagé avec succès !' });
+    setMsg({ ok: true, text: 'Remix partagé !' });
     setSharing(false);
     onCreated(json.remix);
   }
 
   return (
-    <div className="space-y-4">
-      {/* Sélecteur de tableau */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* Sélecteur de photo */}
       {tableaux.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">Tableau source</p>
-          <div className="flex gap-3 flex-wrap">
+        <div>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '1.5px', color: '#555', textTransform: 'uppercase', marginBottom: '12px' }}>
+            Photo source
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {tableaux.map(t => (
               <button
                 key={t.id}
                 onClick={() => setPhotoId(t.id)}
                 aria-pressed={photoId === t.id}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-colors ${
-                  photoId === t.id
-                    ? 'border-indigo-500 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
+                style={{
+                  background: photoId === t.id ? 'rgba(249,115,22,0.08)' : '#0a0a0a',
+                  border: `2px solid ${photoId === t.id ? '#f97316' : '#1a1a1a'}`,
+                  borderRadius: '12px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'border-color 0.15s, background 0.15s',
+                  outline: 'none',
+                }}
               >
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
-                  <Image
-                    src={t.thumbnail}
-                    alt={t.title}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </div>
-                <span className="text-xs text-gray-600 max-w-[72px] truncate">{t.title}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.thumbnail}
+                  alt={t.title}
+                  style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+                />
+                <span style={{
+                  fontSize: '0.68rem',
+                  color: photoId === t.id ? '#f97316' : '#555',
+                  maxWidth: '72px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontWeight: photoId === t.id ? 700 : 400,
+                }}>
+                  {t.title}
+                </span>
               </button>
             ))}
           </div>
         </div>
-      )}
-
-      {tableaux.length === 0 && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-          Aucun tableau disponible pour remixer.
-        </p>
       )}
 
       {/* Canvas */}
@@ -111,6 +139,7 @@ export function RemixStudio({ tableaux, onCreated }: Props) {
         canvasRef={canvasRef}
         state={toolState}
         zoom={zoom}
+        loading={photoLoading}
         onStart={e => startDraw(e, toolState)}
         onMove={e  => draw(e, toolState)}
         onEnd={endDraw}
@@ -130,10 +159,7 @@ export function RemixStudio({ tableaux, onCreated }: Props) {
       />
 
       {msg && (
-        <p
-          role="status"
-          className={`text-sm ${msg.ok ? 'text-green-600' : 'text-red-600'}`}
-        >
+        <p role="status" style={{ fontSize: '0.85rem', color: msg.ok ? '#4ade80' : '#f87171', textAlign: 'center' }}>
           {msg.text}
         </p>
       )}

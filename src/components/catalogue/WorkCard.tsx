@@ -46,12 +46,12 @@ export function WorkCard({ work }: { work: WorkRow }) {
             position: 'absolute', top: '6px', left: '6px',
             background: 'rgba(0,0,0,0.75)',
             backdropFilter: 'blur(4px)',
-            color: '#00f2ff',
+            color: '#f97316',
             fontSize: '0.65rem',
             fontWeight: 700,
             padding: '2px 8px',
             borderRadius: '10px',
-            border: '1px solid rgba(0,242,255,0.2)',
+            border: '1px solid rgba(249,115,22,0.2)',
             letterSpacing: '0.5px',
           }}>
             {KIND_LABEL[work.kind] ?? work.kind}
@@ -78,8 +78,8 @@ export function WorkCard({ work }: { work: WorkRow }) {
       </article>
       <style>{`
         .work-card:hover {
-          border-color: rgba(0,242,255,0.4) !important;
-          box-shadow: 0 4px 20px rgba(0,242,255,0.1);
+          border-color: rgba(249,115,22,0.4) !important;
+          box-shadow: 0 4px 20px rgba(249,115,22,0.1);
           transform: translateY(-2px);
         }
         .work-card:hover .work-card-img {

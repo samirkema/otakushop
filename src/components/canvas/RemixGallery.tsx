@@ -16,6 +16,15 @@ export function RemixGallery({ remixes, votedPhotoIds, currentUserId, onVoteSucc
 
   const voted = new Set(votedPhotoIds);
 
+  // Top remix par photo_id (pour la couronne)
+  const topPerPhoto = new Map<string, string>();
+  for (const r of remixes) {
+    const current = topPerPhoto.get(r.photo_id);
+    if (!current || r.votes_count > (remixes.find(x => x.id === current)?.votes_count ?? 0)) {
+      if (r.votes_count > 0) topPerPhoto.set(r.photo_id, r.id);
+    }
+  }
+
   async function vote(remix: RemixData) {
     if (voted.has(remix.photo_id) || remix.user_id === currentUserId) return;
     setVoting(remix.id);
@@ -40,62 +49,119 @@ export function RemixGallery({ remixes, votedPhotoIds, currentUserId, onVoteSucc
 
   if (remixes.length === 0) {
     return (
-      <p className="text-sm text-gray-400 italic text-center py-10">
-        Aucun remix partagé pour l'instant — soyez le premier !
-      </p>
+      <div style={{
+        textAlign: 'center',
+        padding: '48px 20px',
+        background: '#0a0a0a',
+        border: '1px solid #1a1a1a',
+        borderRadius: '16px',
+      }}>
+        <p style={{ color: '#333', fontSize: '0.85rem', fontStyle: 'italic' }}>
+          Aucun remix partagé pour l&apos;instant — soyez le premier !
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {err && <p className="text-sm text-red-600">{err}</p>}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {err && (
+        <p style={{ fontSize: '0.82rem', color: '#f87171', textAlign: 'center' }}>{err}</p>
+      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+        gap: '12px',
+      }}>
         {remixes.map(r => {
           const isOwn    = r.user_id === currentUserId;
           const hasVoted = voted.has(r.photo_id);
           const isVoting = voting === r.id;
+          const isWinner = topPerPhoto.get(r.photo_id) === r.id;
 
           return (
-            <article key={r.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="relative aspect-[4/3] bg-gray-100">
+            <article
+              key={r.id}
+              style={{
+                background: '#0a0a0a',
+                border: `1px solid ${isWinner ? 'rgba(249,115,22,0.35)' : '#1a1a1a'}`,
+                borderRadius: '14px',
+                overflow: 'hidden',
+                boxShadow: isWinner ? '0 0 20px rgba(249,115,22,0.08)' : 'none',
+              }}
+            >
+              <div style={{ position: 'relative', aspectRatio: '4/3', background: '#111' }}>
                 <Image
                   src={r.image_url}
                   alt={`Remix par ${r.profiles?.pseudo ?? 'inconnu'}`}
                   fill
-                  className="object-cover"
+                  style={{ objectFit: 'cover' }}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
+                {isWinner && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    background: 'rgba(0,0,0,0.7)',
+                    borderRadius: '20px',
+                    padding: '3px 10px',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#f97316',
+                    border: '1px solid rgba(249,115,22,0.4)',
+                    letterSpacing: '1px',
+                  }}>
+                    👑 TOP
+                  </div>
+                )}
               </div>
-              <div className="px-3 py-2.5 flex items-center justify-between gap-2">
-                <span className="text-xs text-gray-500 truncate">
+
+              <div style={{
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+              }}>
+                <span style={{ fontSize: '0.78rem', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   par{' '}
-                  <span className="font-medium text-gray-700">
+                  <span style={{ fontWeight: 700, color: '#888' }}>
                     {r.profiles?.pseudo ?? '—'}
                   </span>
                 </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-semibold text-gray-700 tabular-nums">
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#555', fontVariantNumeric: 'tabular-nums' }}>
                     {r.votes_count}
                   </span>
                   <button
                     onClick={() => vote(r)}
                     disabled={isOwn || hasVoted || isVoting}
                     title={
-                      isOwn
-                        ? 'Vous ne pouvez pas voter pour votre propre remix'
-                        : hasVoted
-                          ? 'Déjà voté pour ce tableau'
-                          : 'Voter pour ce remix'
+                      isOwn      ? 'Votre remix'
+                      : hasVoted ? 'Déjà voté pour cette photo'
+                                 : 'Voter'
                     }
-                    aria-label={`Voter pour le remix de ${r.profiles?.pseudo ?? 'inconnu'} — ${r.votes_count} vote${r.votes_count !== 1 ? 's' : ''}`}
-                    className={`text-sm px-3 py-1 rounded-lg transition-colors ${
-                      hasVoted
-                        ? 'bg-indigo-100 text-indigo-600 cursor-default'
+                    aria-label={`Voter pour le remix de ${r.profiles?.pseudo ?? 'inconnu'}`}
+                    style={{
+                      background: hasVoted
+                        ? 'rgba(249,115,22,0.1)'
                         : isOwn
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50'
-                    }`}
+                          ? '#111'
+                          : 'rgba(249,115,22,0.08)',
+                      border: `1px solid ${hasVoted ? 'rgba(249,115,22,0.4)' : isOwn ? '#222' : 'rgba(249,115,22,0.25)'}`,
+                      color: hasVoted ? '#f97316' : isOwn ? '#333' : '#f97316',
+                      borderRadius: '8px',
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: isOwn || hasVoted ? 'default' : isVoting ? 'wait' : 'pointer',
+                      opacity: isOwn ? 0.4 : 1,
+                      transition: 'background 0.15s, border-color 0.15s',
+                      fontFamily: 'inherit',
+                    }}
                   >
                     {isVoting ? '…' : hasVoted ? '✓ Voté' : '♥ Voter'}
                   </button>

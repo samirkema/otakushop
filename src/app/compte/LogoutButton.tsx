@@ -2,10 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
 
 export function LogoutButton() {
-  const router  = useRouter();
+  const router   = useRouter();
   const supabase = createClient();
 
   async function handleLogout() {
@@ -15,8 +14,23 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant="danger" size="sm" onClick={handleLogout}>
-      Se déconnecter
-    </Button>
+    <button
+      onClick={handleLogout}
+      style={{
+        width: '100%',
+        background: 'transparent',
+        border: '1px solid rgba(239,68,68,0.3)',
+        borderRadius: '8px',
+        padding: '10px',
+        color: '#f87171',
+        fontSize: '0.85rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+        letterSpacing: '1px',
+        transition: 'border-color 0.2s, background 0.2s',
+      }}
+    >
+      SE DÉCONNECTER
+    </button>
   );
 }

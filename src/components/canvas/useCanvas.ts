@@ -15,7 +15,8 @@ export function useCanvas() {
   const historyRef   = useRef<ImageData[]>([]);
   const hasDrawnRef  = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom]       = useState(1);
+  const [photoLoading, setPhotoLoading] = useState(false);
 
   function getCtx(): CanvasRenderingContext2D | null {
     return canvasRef.current?.getContext('2d') ?? null;
@@ -35,7 +36,6 @@ export function useCanvas() {
     c: HTMLCanvasElement,
   ): { x: number; y: number } {
     const rect   = c.getBoundingClientRect();
-    // getBoundingClientRect tient compte du CSS transform scale — scaleX/Y est correct même avec zoom
     const scaleX = c.width  / rect.width;
     const scaleY = c.height / rect.height;
     if ('touches' in e) {
@@ -52,6 +52,44 @@ export function useCanvas() {
     g.lineCap     = 'round';
     g.lineJoin    = 'round';
   }
+
+  const loadPhoto = useCallback((src: string) => {
+    const c = canvasRef.current;
+    const g = getCtx();
+    if (!c || !g || !src) return;
+
+    setPhotoLoading(true);
+    historyRef.current = [];
+    hasDrawnRef.current = false;
+    setCanUndo(false);
+
+    const img = new Image();
+    img.onload = () => {
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, c.width, c.height);
+
+      // Cover : remplit le canvas en gardant les proportions
+      const scaleW = c.width  / img.width;
+      const scaleH = c.height / img.height;
+      const scale  = Math.max(scaleW, scaleH);
+      const x = (c.width  - img.width  * scale) / 2;
+      const y = (c.height - img.height * scale) / 2;
+      g.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+      // Premier état de l'historique = photo chargée (undo ne peut pas effacer la photo)
+      historyRef.current.push(g.getImageData(0, 0, c.width, c.height));
+      setPhotoLoading(false);
+    };
+    img.onerror = () => {
+      // Fond blanc si l'image échoue
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, c.width, c.height);
+      setPhotoLoading(false);
+    };
+    img.src = src;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startDraw = useCallback((
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
@@ -105,9 +143,16 @@ export function useCanvas() {
     if (!c || !g) return;
     saveSnapshot();
     hasDrawnRef.current = false;
-    g.clearRect(0, 0, c.width, c.height);
-    g.fillStyle = '#ffffff';
-    g.fillRect(0, 0, c.width, c.height);
+    // Recharger la photo depuis l'historique (premier snapshot = photo)
+    if (historyRef.current.length > 0) {
+      const base = historyRef.current[0];
+      g.putImageData(base, 0, 0);
+      historyRef.current = [base];
+    } else {
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, c.width, c.height);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -117,7 +162,6 @@ export function useCanvas() {
   const resetZoom = useCallback(() => setZoom(1), []);
 
   // Listener non-passif pour permettre e.preventDefault() sur la roulette
-  // (React enregistre les wheel listeners passifs par défaut depuis React 17)
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
@@ -135,6 +179,6 @@ export function useCanvas() {
 
   return {
     canvasRef, startDraw, draw, endDraw, undo, clear, getBlob,
-    canUndo, zoom, resetZoom, hasDrawnRef,
+    canUndo, zoom, resetZoom, hasDrawnRef, loadPhoto, photoLoading,
   };
 }

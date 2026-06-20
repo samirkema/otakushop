@@ -266,12 +266,7 @@ create policy "Lecture de son profil ou admin" on public.profiles
 create policy "Modification de son propre profil" on public.profiles
   for update
   using (auth.uid() = id)
-  with check (
-    auth.uid() = id
-    and new.role = old.role
-    and new.subscription_tier = old.subscription_tier
-    and new.subscription_expires_at is not distinct from old.subscription_expires_at
-  );
+  with check (auth.uid() = id);
 
 -- Tableaux
 alter table public.tableaux enable row level security;

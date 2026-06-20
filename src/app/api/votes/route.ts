@@ -66,12 +66,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erreur lors du vote.' }, { status: 500 });
   }
 
-  // Increment votes_count (non-atomic — acceptable pour un compteur, pas financier)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateErr } = await (svc as any)
-    .from('remixes')
-    .update({ votes_count: remixData.votes_count + 1 })
-    .eq('id', remixId);
+  const { error: updateErr } = await (svc as any).rpc('increment_remix_votes', { remix_id: remixId });
 
   if (updateErr) {
     console.error('[votes] increment votes_count failed:', updateErr.message);

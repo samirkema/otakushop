@@ -3,6 +3,7 @@ import { createHash }   from 'crypto';
 import bcryptjs         from 'bcryptjs';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sendSubscriptionConfirmation } from '@/lib/email';
+import { isSubscriber } from '@/lib/roles';
 
 // Limites de rate limiting
 const MAX_ATTEMPTS_PER_USER_24H = 5;
@@ -16,8 +17,27 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-  // Hash IP pour stocker sans exposer l'adresse brute en BDD
-  const rawIp  = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  // Lire le body JSON EN PREMIER — un body malformé n'enregistre pas de tentative
+  // (évite le DoS rate-limit par flood de requêtes JSON invalides ciblant un userId).
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 });
+  }
+
+  const { code } = body as { code?: string };
+  if (!code || typeof code !== 'string' || code.trim() === '') {
+    return NextResponse.json({ error: 'code requis' }, { status: 400 });
+  }
+
+  // x-real-ip est positionné par Vercel/nginx et ne peut pas être falsifié par le client.
+  // x-forwarded-for en fallback (première entrée) pour les environnements sans proxy Vercel.
+  const rawIp  = (
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+  );
   const ipHash = createHash('sha256').update(rawIp).digest('hex');
 
   const svc = createServiceClient();
@@ -25,8 +45,7 @@ export async function POST(request: Request) {
   const window1h  = new Date(Date.now() -      3600 * 1000).toISOString();
 
   // Enregistre la tentative EN PREMIER — avant la vérification des compteurs.
-  // Cela élimine la race condition TOCTOU : même si deux requêtes arrivent simultanément,
-  // elles s'insèrent toutes les deux, et le compteur post-insertion reflète la réalité.
+  // Élimine la race condition TOCTOU (insertions simultanées visibles par le compteur).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: insertError } = await (svc as any)
     .from('activation_attempts')
@@ -52,9 +71,6 @@ export async function POST(request: Request) {
       .gte('attempted_at', window1h),
   ]);
 
-  // Utiliser > (strict) car le compteur inclut déjà la tentative courante.
-  // Sémantique identique à l'ancienne garde >= avec insert-après :
-  // MAX_ATTEMPTS autorisés, le suivant est bloqué.
   if ((userCount ?? 0) > MAX_ATTEMPTS_PER_USER_24H) {
     return NextResponse.json(
       { error: 'Trop de tentatives. Réessayez dans 24h.' },
@@ -66,18 +82,6 @@ export async function POST(request: Request) {
       { error: 'Trop de tentatives. Réessayez dans 1h.' },
       { status: 429 },
     );
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 });
-  }
-
-  const { code } = body as { code?: string };
-  if (!code || typeof code !== 'string' || code.trim() === '') {
-    return NextResponse.json({ error: 'code requis' }, { status: 400 });
   }
 
   const hash = process.env.ACTIVATION_CODE_HASH;
@@ -92,7 +96,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Code invalide' }, { status: 403 });
   }
 
+  // Vérifier que l'abonnement actuel n'est pas déjà actif (prévient l'extension infinie).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: currentProfile } = await (supabase as any)
+    .from('profiles')
+    .select('subscription_tier, subscription_expires_at')
+    .eq('id', user.id)
+    .single();
+
+  type ProfileSnap = { subscription_tier?: import('@/lib/supabase/types').SubscriptionTier | null; subscription_expires_at?: string | null };
+  const currentTier    = (currentProfile as ProfileSnap | null)?.subscription_tier ?? null;
+  const currentExpires = (currentProfile as ProfileSnap | null)?.subscription_expires_at ?? null;
+
+  if (isSubscriber(currentTier, currentExpires)) {
+    return NextResponse.json(
+      { error: 'Abonnement déjà actif — attendez son expiration pour renouveler.' },
+      { status: 409 },
+    );
+  }
+
   const days = parseInt(process.env.ACTIVATION_DAYS ?? '30', 10);
+  if (isNaN(days) || days <= 0) {
+    console.error('[subscription/activate] ACTIVATION_DAYS invalide:', process.env.ACTIVATION_DAYS);
+    return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
+  }
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
 

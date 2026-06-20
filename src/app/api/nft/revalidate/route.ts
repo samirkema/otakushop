@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse }  from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { createServiceClient } from '@/lib/supabase/server';
 import { checkNftOwnership }   from '@/lib/alchemy';
 
@@ -6,9 +7,19 @@ import { checkNftOwnership }   from '@/lib/alchemy';
 // Protégé par : Authorization: Bearer <CRON_SECRET>
 // Pour chaque profil tier='nft' : re-vérifie la possession du NFT.
 // Si le wallet ne détient plus le NFT → subscription_tier = 'free'.
+// Budget d'exécution (ms) — Vercel Free/Pro = 10 s, on réserve 1 s de marge.
+const EXEC_BUDGET_MS = 9_000;
+
 export async function POST(request: Request) {
-  const auth = request.headers.get('authorization') ?? '';
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  const auth   = request.headers.get('authorization') ?? '';
+  if (!secret) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const received = Buffer.from(auth);
+  const valid    = expected.length === received.length && timingSafeEqual(expected, received);
+  if (!valid) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
@@ -26,10 +37,15 @@ export async function POST(request: Request) {
   }
 
   const profiles = (nftProfiles ?? []) as { id: string; wallet_address: string | null }[];
-  const results  = { checked: profiles.length, revoked: 0, errors: 0 };
+  const results  = { checked: profiles.length, revoked: 0, errors: 0, timedOut: false };
+  const deadline = Date.now() + EXEC_BUDGET_MS;
 
   // Traitement séquentiel pour éviter de saturer Alchemy en rafale
   for (const profile of profiles) {
+    if (Date.now() > deadline) {
+      results.timedOut = true;
+      break;
+    }
     if (!profile.wallet_address) {
       // Wallet manquant → révoquer sans appel Alchemy
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

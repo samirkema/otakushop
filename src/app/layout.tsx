@@ -18,9 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
-      {/* Script anti-flash : appliqué avant le premier paint */}
+      {/* Script anti-flash : appliqué avant le premier paint, chargé en synchrone depuis public/ */}
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('otaku_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();` }} />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-init.js" />
       </head>
       <body className="min-h-screen antialiased">
         <Navbar />

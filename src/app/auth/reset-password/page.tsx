@@ -44,11 +44,11 @@ export default function ResetPasswordPage() {
         <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '16px', padding: '32px' }}>
           {sent ? (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ color: '#00f2ff', fontWeight: 600, marginBottom: '8px' }}>Email envoyé !</p>
+              <p style={{ color: '#f97316', fontWeight: 600, marginBottom: '8px' }}>Email envoyé !</p>
               <p style={{ color: '#555', fontSize: '0.875rem', marginBottom: '16px' }}>
                 Vérifiez votre boîte mail. Le lien est valable 1 heure.
               </p>
-              <Link href="/auth/login" style={{ color: '#00f2ff', fontSize: '0.875rem', textDecoration: 'none' }}>
+              <Link href="/auth/login" style={{ color: '#f97316', fontSize: '0.875rem', textDecoration: 'none' }}>
                 Retour à la connexion
               </Link>
             </div>
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
                   Envoyer le lien
                 </Button>
                 <p style={{ textAlign: 'center', fontSize: '0.8rem' }}>
-                  <Link href="/auth/login" style={{ color: '#00f2ff', textDecoration: 'none' }}>
+                  <Link href="/auth/login" style={{ color: '#f97316', textDecoration: 'none' }}>
                     Retour à la connexion
                   </Link>
                 </p>

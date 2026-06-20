@@ -60,7 +60,7 @@ export default async function MangaReaderPage({
   type ProgressRes = { data: ProgressSelect | null; error: { message: string } | null };
 
   const [rawWork, rawPages, rawProgress] = await Promise.all([
-    supabase.from('manga_works').select('id, title, kind, published, display_config').eq('id', workId).single(),
+    supabase.from('manga_works').select('id, title, kind, published, display_config').eq('id', workId).eq('published', true).single(),
     supabase.from('manga_pages').select('page_number, image_url').eq('work_id', workId).order('page_number', { ascending: true }),
     supabase.from('reading_progress').select('page_number').eq('work_id', workId).eq('user_id', profile.id).maybeSingle(),
   ]);

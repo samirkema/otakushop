@@ -1,90 +1,197 @@
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/auth';
-import { formatDate } from '@/lib/utils';
+import { isSubscriber } from '@/lib/roles';
+import Link from 'next/link';
 import { LogoutButton } from './LogoutButton';
+import { ActivationForm } from './ActivationForm';
+import { WalletConnect } from './WalletConnect';
 
 export const metadata = { title: 'Mon compte — Otaku Shop' };
 
-const tierLabel: Record<string, string> = {
-  free:       'Gratuit',
-  subscriber: 'Abonné',
-  nft:        'NFT',
-};
-
-const tierColor: Record<string, string> = {
-  free:       'bg-gray-100 text-gray-700',
-  subscriber: 'bg-indigo-100 text-indigo-700',
-  nft:        'bg-purple-100 text-purple-700',
-};
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 export default async function ComptePage() {
   const profile = await getProfile();
   if (!profile) redirect('/auth/login');
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Mon compte</h1>
+  const subscribed = isSubscriber(profile.subscription_tier, profile.subscription_expires_at);
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
-          {/* Avatar + pseudo */}
-          <div className="p-6 flex items-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600">
+  const tierLabel: Record<string, string> = {
+    free: 'Gratuit', subscriber: 'Abonné', nft: 'NFT',
+  };
+  const tierColor: Record<string, string> = {
+    free: '#888', subscriber: '#f97316', nft: '#fb923c',
+  };
+
+  return (
+    <>
+      <style>{`
+        .compte-card { transition: border-color 0.2s; }
+        .compte-card:hover { border-color: rgba(249,115,22,0.3) !important; }
+        .logout-btn:hover { background: rgba(239,68,68,0.08) !important; border-color: rgba(239,68,68,0.6) !important; }
+      `}</style>
+
+      <div style={{ background: '#000', minHeight: '100vh', padding: '60px 20px 80px', fontFamily: "'Segoe UI', sans-serif" }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+
+          {/* HEADER */}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{
+              width: '64px', height: '64px', borderRadius: '50%',
+              background: 'rgba(249,115,22,0.1)',
+              border: '2px solid rgba(249,115,22,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '1.5rem', fontWeight: 900, color: '#f97316',
+            }}>
               {profile.pseudo[0].toUpperCase()}
             </div>
-            <div>
-              <p className="font-semibold text-gray-900">{profile.pseudo}</p>
-              <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${tierColor[profile.subscription_tier]}`}>
-                {tierLabel[profile.subscription_tier]}
-              </span>
-            </div>
+            <h1 style={{ fontSize: '1.3rem', fontWeight: 900, letterSpacing: '3px', color: '#fff', margin: '0 0 6px' }}>
+              {profile.pseudo.toUpperCase()}
+            </h1>
+            <span style={{
+              display: 'inline-block',
+              fontSize: '0.7rem', fontWeight: 700, letterSpacing: '1.5px',
+              padding: '3px 12px', borderRadius: '20px',
+              background: 'rgba(249,115,22,0.08)',
+              border: `1px solid ${tierColor[profile.subscription_tier]}40`,
+              color: tierColor[profile.subscription_tier],
+            }}>
+              {tierLabel[profile.subscription_tier].toUpperCase()}
+            </span>
           </div>
 
-          {/* Détails abonnement */}
-          <div className="p-6 space-y-3">
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Abonnement</h2>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Statut</span>
-              <span className="font-medium text-gray-900">{tierLabel[profile.subscription_tier]}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+            {/* ABONNEMENT */}
+            <div className="compte-card" style={{
+              background: '#0a0a0a', border: '1px solid #1a1a1a',
+              borderRadius: '16px', padding: '24px',
+            }}>
+              <h2 style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '2px', color: '#444', textTransform: 'uppercase', marginBottom: '16px' }}>
+                Abonnement
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Statut actif */}
+                {subscribed && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                      <span style={{ color: '#666' }}>Statut</span>
+                      <span style={{ color: '#f97316', fontWeight: 700 }}>✓ Actif</span>
+                    </div>
+                    {profile.subscription_tier === 'subscriber' && profile.subscription_expires_at && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                        <span style={{ color: '#666' }}>Expire le</span>
+                        <span style={{ color: '#ccc', fontWeight: 600 }}>{formatDate(profile.subscription_expires_at)}</span>
+                      </div>
+                    )}
+                    {profile.subscription_tier === 'nft' && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                        <span style={{ color: '#666' }}>Wallet</span>
+                        <span style={{ color: '#fb923c', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {profile.wallet_address
+                            ? profile.wallet_address.slice(0, 6) + '…' + profile.wallet_address.slice(-4)
+                            : '—'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Code d'activation — utilisateurs non abonnés */}
+                {!subscribed && (
+                  <div>
+                    <p style={{ color: '#555', fontSize: '0.78rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      Code d&apos;activation
+                    </p>
+                    <ActivationForm />
+                  </div>
+                )}
+
+                {/* NFT Holder — tout le monde sauf déjà NFT */}
+                {profile.subscription_tier !== 'nft' && (
+                  <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: '20px' }}>
+                    <p style={{ color: '#555', fontSize: '0.78rem', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      NFT Holder
+                    </p>
+                    <WalletConnect userId={profile.id} />
+                  </div>
+                )}
+
+              </div>
             </div>
-            {profile.subscription_tier === 'subscriber' && profile.subscription_expires_at && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Expire le</span>
-                <span className="font-medium text-gray-900">
-                  {formatDate(profile.subscription_expires_at)}
-                </span>
+
+            {/* INFOS COMPTE */}
+            <div className="compte-card" style={{
+              background: '#0a0a0a', border: '1px solid #1a1a1a',
+              borderRadius: '16px', padding: '24px',
+            }}>
+              <h2 style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '2px', color: '#444', textTransform: 'uppercase', marginBottom: '16px' }}>
+                Informations
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <span style={{ color: '#666' }}>Pseudo</span>
+                  <span style={{ color: '#ccc', fontWeight: 600 }}>{profile.pseudo}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <span style={{ color: '#666' }}>Membre depuis</span>
+                  <span style={{ color: '#ccc', fontWeight: 600 }}>{formatDate(profile.created_at)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CLUB VIP */}
+            {profile.subscription_tier === 'nft' ? (
+              <Link href="/club-vip" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: 'rgba(249,115,22,0.05)',
+                  border: '1px solid rgba(249,115,22,0.2)',
+                  borderRadius: '16px', padding: '20px 24px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span className="emoji" style={{ fontSize: '1.4rem' }}>👑</span>
+                    <div>
+                      <p style={{ color: '#f97316', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '1.5px', margin: 0 }}>CLUB VIP</p>
+                      <p style={{ color: '#555', fontSize: '0.75rem', margin: '2px 0 0' }}>Commandes sur mesure & événements</p>
+                    </div>
+                  </div>
+                  <span style={{ color: '#f97316', fontSize: '1.1rem' }}>→</span>
+                </div>
+              </Link>
+            ) : (
+              <div style={{
+                background: '#0a0a0a',
+                border: '1px solid #1a1a1a',
+                borderRadius: '16px', padding: '20px 24px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                opacity: 0.45,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="emoji" style={{ fontSize: '1.4rem' }}>👑</span>
+                  <div>
+                    <p style={{ color: '#888', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '1.5px', margin: 0 }}>CLUB VIP</p>
+                    <p style={{ color: '#444', fontSize: '0.75rem', margin: '2px 0 0' }}>Réservé aux détenteurs de NFT</p>
+                  </div>
+                </div>
+                <span style={{ color: '#333', fontSize: '0.75rem' }}>🔒</span>
               </div>
             )}
-            {profile.subscription_tier === 'nft' && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Wallet</span>
-                <span className="font-mono text-xs text-gray-700 truncate max-w-[200px]">
-                  {profile.wallet_address ?? '—'}
-                </span>
-              </div>
-            )}
-            {profile.subscription_tier === 'free' && (
-              <p className="text-sm text-gray-500">
-                Passez à l&apos;abonnement pour accéder aux mangas, jeux et My Remix.
-              </p>
-            )}
-          </div>
 
-          {/* Infos compte */}
-          <div className="p-6 space-y-3">
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Compte</h2>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Membre depuis</span>
-              <span className="font-medium text-gray-900">{formatDate(profile.created_at)}</span>
+            {/* DÉCONNEXION */}
+            <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '16px', padding: '24px' }}>
+              <LogoutButton />
             </div>
-          </div>
 
-          {/* Déconnexion */}
-          <div className="p-6">
-            <LogoutButton />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

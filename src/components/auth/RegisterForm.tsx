@@ -78,7 +78,7 @@ export function RegisterForm() {
 
       <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#555' }}>
         Déjà un compte ?{' '}
-        <Link href="/auth/login" style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 600 }}>
+        <Link href="/auth/login" style={{ color: '#f97316', textDecoration: 'none', fontWeight: 600 }}>
           Se connecter
         </Link>
       </p>

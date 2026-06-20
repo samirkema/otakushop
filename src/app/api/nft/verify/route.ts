@@ -37,8 +37,25 @@ export async function POST(request: Request) {
     );
   }
 
-  if (message.length > 500) {
-    return NextResponse.json({ error: 'message trop long' }, { status: 400 });
+  // Valider le format du message et l'horodatage (protection anti-replay)
+  // Format attendu : "Otaku Shop — Vérification wallet\nAdresse : 0x…\nUser : <uuid>\nTimestamp : <ms>"
+  const MSG_RE = /^Otaku Shop — Vérification wallet\nAdresse : (0x[0-9a-fA-F]{40})\nUser : ([0-9a-f-]{36})\nTimestamp : (\d{13,14})$/;
+  const msgMatch = MSG_RE.exec(message);
+  if (!msgMatch) {
+    return NextResponse.json({ error: 'Format de message invalide' }, { status: 400 });
+  }
+
+  const msgTimestamp = parseInt(msgMatch[3], 10);
+  const ageMs = Date.now() - msgTimestamp;
+  if (ageMs < 0 || ageMs > 5 * 60 * 1000) {
+    return NextResponse.json(
+      { error: 'Message expiré — reconnectez votre wallet' },
+      { status: 400 },
+    );
+  }
+
+  if (msgMatch[2] !== user.id) {
+    return NextResponse.json({ error: 'Identifiant utilisateur invalide' }, { status: 403 });
   }
 
   if (!ADDRESS_RE.test(walletAddress)) {

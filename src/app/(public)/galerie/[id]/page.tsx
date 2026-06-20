@@ -1,0 +1,162 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+
+export const metadata = { title: 'Galerie — Otaku Shop' };
+
+export default async function GalerieDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  // Requête ciblée : 1 ligne au lieu de toute la table
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: raw } = await (supabase as any)
+    .from('tableaux')
+    .select('id, title, thumbnail, main_image, price_eur, formats, created_at')
+    .eq('id', id)
+    .eq('available', true)
+    .single();
+
+  if (!raw) notFound();
+
+  type FormatEntry = { label: string; price_eur: number };
+  type TableauRow = { id: string; title: string; thumbnail: string; main_image: string; price_eur: number | null; formats: FormatEntry[] | null; created_at: string };
+  const row = raw as TableauRow;
+
+  // thumbnail / main_image peut être une URL complète ou un path storage
+  function resolveStorageUrl(val: string) {
+    return val.startsWith('http')
+      ? val
+      : supabase.storage.from('tableaux').getPublicUrl(val).data.publicUrl;
+  }
+
+  const thumbnailUrl = resolveStorageUrl(row.thumbnail);
+  const mainImageUrl = resolveStorageUrl(row.main_image);
+  const imgSrc       = mainImageUrl || thumbnailUrl;
+
+  const formats: FormatEntry[] = Array.isArray(row.formats) && row.formats.length > 0
+    ? row.formats
+    : [];
+
+  const tableau = { ...row, thumbnail: thumbnailUrl, main_image: mainImageUrl };
+
+  // Navigation prev/next : 2 requêtes légères (id + title uniquement)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [prevRes, nextRes] = await Promise.all([
+    (supabase as any).from('tableaux').select('id, title').eq('available', true)
+      .lt('created_at', row.created_at).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    (supabase as any).from('tableaux').select('id, title').eq('available', true)
+      .gt('created_at', row.created_at).order('created_at', { ascending: true }).limit(1).maybeSingle(),
+  ]);
+
+  const prev = prevRes.data as { id: string; title: string } | null;
+  const next = nextRes.data as { id: string; title: string } | null;
+
+  return (
+    <>
+      <style>{`
+        .order-btn:hover { background: rgba(249,115,22,0.15) !important; border-color: rgba(249,115,22,0.6) !important; }
+        .nav-btn:hover { border-color: rgba(249,115,22,0.3) !important; color: #f97316 !important; }
+      `}</style>
+
+      <div style={{ background: '#000', minHeight: '100vh', padding: '40px 20px 80px', fontFamily: "'Segoe UI', sans-serif" }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+
+          <Link href="/galerie" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-block', marginBottom: '32px' }}>
+            ← Retour à la galerie
+          </Link>
+
+          {/* IMAGE */}
+          <div style={{
+            background: '#0a0a0a', border: '1px solid #1a1a1a',
+            borderRadius: '18px', overflow: 'hidden', marginBottom: '24px',
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc}
+              alt={tableau.title}
+              style={{ width: '100%', display: 'block', maxHeight: '70vh', objectFit: 'contain', background: '#050505' }}
+            />
+          </div>
+
+          {/* INFOS + COMMANDE */}
+          <div style={{
+            background: '#0a0a0a', border: '1px solid #1a1a1a',
+            borderRadius: '18px', padding: '28px', marginBottom: '24px',
+          }}>
+            <h1 style={{ fontSize: '1.3rem', fontWeight: 900, letterSpacing: '3px', color: '#fff', margin: '0 0 20px' }}>
+              {tableau.title.toUpperCase()}
+            </h1>
+
+            {formats.length > 0 ? (
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{ color: '#555', fontSize: '0.8rem', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>Formats disponibles</p>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {formats.map((f, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                        <td style={{ padding: '8px 0', color: '#bbb', fontSize: '0.875rem' }}>{f.label}</td>
+                        <td style={{ padding: '8px 0', color: '#f97316', fontWeight: 700, fontSize: '0.875rem', textAlign: 'right' }}>{f.price_eur} €</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : tableau.price_eur != null ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '24px' }}>
+                <span style={{ color: '#555' }}>Prix</span>
+                <span style={{ color: '#f97316', fontWeight: 700 }}>À partir de {tableau.price_eur} €</span>
+              </div>
+            ) : null}
+
+            <a
+              href={`mailto:kilimangarocontact@gmail.com?subject=Commande tableau — ${tableau.title}`}
+              className="order-btn"
+              style={{
+                display: 'block', textAlign: 'center',
+                background: 'rgba(249,115,22,0.08)',
+                border: '1px solid rgba(249,115,22,0.3)',
+                color: '#f97316', borderRadius: '10px', padding: '14px',
+                fontSize: '0.85rem', fontWeight: 800, letterSpacing: '1.5px',
+                textDecoration: 'none', transition: 'background 0.2s, border-color 0.2s',
+              }}
+            >
+              COMMANDER CE TABLEAU
+            </a>
+          </div>
+
+          {/* NAVIGATION */}
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {prev ? (
+              <Link href={`/galerie/${prev.id}`} className="nav-btn" style={{
+                flex: 1, textAlign: 'center',
+                background: '#0a0a0a', border: '1px solid #1a1a1a',
+                borderRadius: '10px', padding: '12px',
+                color: '#555', fontSize: '0.8rem', textDecoration: 'none',
+                transition: 'border-color 0.2s, color 0.2s',
+              }}>
+                ← {prev.title}
+              </Link>
+            ) : <div style={{ flex: 1 }} />}
+            {next ? (
+              <Link href={`/galerie/${next.id}`} className="nav-btn" style={{
+                flex: 1, textAlign: 'center',
+                background: '#0a0a0a', border: '1px solid #1a1a1a',
+                borderRadius: '10px', padding: '12px',
+                color: '#555', fontSize: '0.8rem', textDecoration: 'none',
+                transition: 'border-color 0.2s, color 0.2s',
+              }}>
+                {next.title} →
+              </Link>
+            ) : <div style={{ flex: 1 }} />}
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+}

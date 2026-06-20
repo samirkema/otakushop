@@ -1,5 +1,19 @@
 export const metadata = { title: 'Aide & Tutoriel — Otaku Shop' };
 
+function RichText({ text }: { text: string }) {
+  const parts = text.split(/(<strong>.*?<\/strong>)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = /^<strong>(.*?)<\/strong>$/.exec(part);
+        return match
+          ? <strong key={i} style={{ color: '#ccc' }}>{match[1]}</strong>
+          : <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 const GUIDE_CARDS = [
   {
     icon: '👤',
@@ -51,8 +65,8 @@ export default function AidePage() {
       <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '0 auto 50px' }}>
         <h1 style={{
           fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-          color: '#00f2ff',
-          textShadow: '0 0 15px #00f2ff',
+          color: '#f97316',
+          textShadow: '0 0 15px #f97316',
           letterSpacing: '3px',
           textTransform: 'uppercase',
           margin: '0 0 10px',
@@ -71,10 +85,10 @@ export default function AidePage() {
         height: 0,
         maxWidth: '1000px',
         margin: '0 auto 50px',
-        border: '3px solid #00f2ff',
+        border: '3px solid #f97316',
         borderRadius: '20px',
         overflow: 'hidden',
-        boxShadow: '0 0 30px rgba(0,242,255,0.4)',
+        boxShadow: '0 0 30px rgba(249,115,22,0.4)',
         background: '#111',
       }}>
         <iframe
@@ -97,20 +111,20 @@ export default function AidePage() {
         maxWidth: '1000px',
         margin: '0 auto 40px',
         padding: '14px 24px',
-        background: 'rgba(168,85,247,0.08)',
-        border: '1px solid rgba(168,85,247,0.3)',
+        background: 'rgba(251,146,60,0.08)',
+        border: '1px solid rgba(251,146,60,0.3)',
         borderRadius: '12px',
       }}>
         <span style={{
-          background: 'rgba(168,85,247,0.2)',
-          color: '#a855f7',
+          background: 'rgba(251,146,60,0.2)',
+          color: '#fb923c',
           fontWeight: 800,
           fontSize: '0.85rem',
           letterSpacing: '1px',
           padding: '4px 12px',
           borderRadius: '20px',
-          border: '1px solid rgba(168,85,247,0.4)',
-        }}>🆕 MISE À JOUR</span>
+          border: '1px solid rgba(251,146,60,0.4)',
+        }}><span className="emoji">🆕</span> MISE À JOUR</span>
         <span style={{ color: '#666', fontSize: '0.85rem' }}>Juin 2026</span>
       </div>
 
@@ -119,12 +133,12 @@ export default function AidePage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h2 style={{
             fontSize: '1.4rem',
-            color: '#00f2ff',
+            color: '#f97316',
             letterSpacing: '2px',
             marginBottom: '14px',
-            textShadow: '0 0 10px rgba(0,242,255,0.3)',
+            textShadow: '0 0 10px rgba(249,115,22,0.3)',
           }}>
-            🗺️ Comment fonctionne Otaku Shop ?
+            <span className="emoji">🗺️</span> Comment fonctionne Otaku Shop ?
           </h2>
           <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: 1.7, maxWidth: '680px', margin: '0 auto' }}>
             Otaku Shop est une plateforme dédiée aux passionnés de manga, webtoon et dessin. Elle fonctionne en deux modes : un mode classique accessible à tous, et un mode avancé lié à la blockchain pour ceux qui souhaitent aller plus loin.
@@ -147,33 +161,17 @@ export default function AidePage() {
             }}
               className="guide-card"
             >
-              <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{card.icon}</div>
-              <h3 style={{ color: '#00f2ff', fontSize: '1rem', fontWeight: 700, marginBottom: '10px', letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '12px' }}><span className="emoji">{card.icon}</span></div>
+              <h3 style={{ color: '#f97316', fontSize: '1rem', fontWeight: 700, marginBottom: '10px', letterSpacing: '0.5px' }}>
                 {card.title}
               </h3>
-              <p
-                style={{ color: '#666', fontSize: '0.84rem', lineHeight: 1.65 }}
-                dangerouslySetInnerHTML={{ __html: card.body.replace(/<strong>/g, '<strong style="color:#ccc">') }}
-              />
+              <p style={{ color: '#666', fontSize: '0.84rem', lineHeight: 1.65 }}>
+                <RichText text={card.body} />
+              </p>
             </div>
           ))}
         </div>
 
-        {/* INFO VERCEL */}
-        <div style={{
-          background: 'rgba(0,242,255,0.03)',
-          border: '1px solid rgba(0,242,255,0.15)',
-          borderRadius: '14px',
-          padding: '28px',
-        }}>
-          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⚡</div>
-          <h3 style={{ color: '#00f2ff', fontSize: '1.05rem', fontWeight: 700, marginBottom: '14px', letterSpacing: '0.5px' }}>
-            Site hébergé sur Vercel
-          </h3>
-          <p style={{ color: '#555', fontSize: '0.85rem', lineHeight: 1.7 }}>
-            Otaku Shop V2 est hébergé sur Vercel avec un backend Supabase. Les temps de réponse sont rapides et les données sécurisées côté serveur. Si une page met du temps à charger lors d'une première visite, patientez quelques secondes le temps que le cache se réchauffe.
-          </p>
-        </div>
       </div>
 
       {/* FOOTER AIDE */}
@@ -185,18 +183,18 @@ export default function AidePage() {
           border: '1px solid #1e1e1e',
           borderRadius: '15px',
         }}>
-          <h3 style={{ color: '#00f2ff', marginBottom: '15px' }}>🔗 Liens utiles</h3>
+          <h3 style={{ color: '#f97316', marginBottom: '15px' }}><span className="emoji">🔗</span> Liens utiles</h3>
           <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '8px' }}>
             Collection NFT :{' '}
             <a href="https://opensea.io/collection/swap-swap-54096494" target="_blank" rel="noopener noreferrer"
-              style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 'bold' }}>
+              style={{ color: '#f97316', textDecoration: 'none', fontWeight: 'bold' }}>
               SWAP-SWAP sur OpenSea
             </a>
           </p>
           <p style={{ color: '#666', fontSize: '0.9rem' }}>
             Contact :{' '}
             <a href="mailto:kilimangarocontact@gmail.com"
-              style={{ color: '#00f2ff', textDecoration: 'none', fontWeight: 'bold' }}>
+              style={{ color: '#f97316', textDecoration: 'none', fontWeight: 'bold' }}>
               kilimangarocontact@gmail.com
             </a>
           </p>
@@ -205,8 +203,8 @@ export default function AidePage() {
 
       <style>{`
         .guide-card:hover {
-          border-color: #00f2ff !important;
-          box-shadow: 0 4px 20px rgba(0,242,255,0.08);
+          border-color: #f97316 !important;
+          box-shadow: 0 4px 20px rgba(249,115,22,0.08);
         }
       `}</style>
     </div>

@@ -26,13 +26,14 @@ export async function middleware(req: NextRequest) {
 
   const path = req.nextUrl.pathname;
   const needsSubscriber = ['/manga', '/jeux', '/my-remix'].some(r => path.startsWith(r));
-  const needsAdmin = path.startsWith('/admin');
+  const needsAdmin      = path.startsWith('/admin');
+  const needsNft        = path.startsWith('/club-vip');
 
-  if ((needsSubscriber || needsAdmin) && !user) {
+  if ((needsSubscriber || needsAdmin || needsNft) && !user) {
     return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
-  if (needsSubscriber || needsAdmin) {
+  if (needsSubscriber || needsAdmin || needsNft) {
     const { data } = await supabase
       .from('profiles')
       .select('role, subscription_tier, subscription_expires_at')
@@ -50,6 +51,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
+    if (needsNft && profile?.subscription_tier !== 'nft') {
+      return NextResponse.redirect(new URL('/compte', req.url));
+    }
+
     if (needsSubscriber && !needsAdmin) {
       const active = isSubscriber(profile?.subscription_tier, profile?.subscription_expires_at);
       if (!active) return NextResponse.redirect(new URL('/compte', req.url));
@@ -60,5 +65,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/manga/:path*', '/jeux/:path*', '/my-remix/:path*', '/admin/:path*'],
+  matcher: ['/manga/:path*', '/jeux/:path*', '/my-remix/:path*', '/admin/:path*', '/club-vip/:path*'],
 };

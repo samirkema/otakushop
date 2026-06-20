@@ -44,7 +44,7 @@ async function CatalogueSection({ kind, label, icon, q }: {
         <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', letterSpacing: '1px' }}>
           {icon} {label}
         </h2>
-        <Link href={`/manga?kind=${kind}`} style={{ fontSize: '0.78rem', color: '#00f2ff', textDecoration: 'none' }}>
+        <Link href={`/manga?kind=${kind}`} style={{ fontSize: '0.78rem', color: '#f97316', textDecoration: 'none' }}>
           Voir tout →
         </Link>
       </div>
@@ -83,10 +83,10 @@ async function SearchResults({ q }: { q: string }) {
 }
 
 const ACTIONS = [
-  { id: 'galerie',  href: '/galerie', icon: '🖼️',  title: 'GALERIE',   desc: 'Collection complète de tableaux et photomontages.', accent: '#00f2ff', requiresSub: false },
-  { id: 'manga',    href: '/manga',   icon: '📖',  title: 'MANGA',     desc: 'Mangas, webtoons et BD en streaming illimité.',      accent: '#00f2ff', requiresSub: true  },
-  { id: 'jeux',     href: '/jeux',    icon: '🎮',  title: 'IMMERSION', desc: 'My Remix et jeux exclusifs dans l\'univers Otaku.',  accent: '#00f2ff', requiresSub: true  },
-  { id: 'aide',     href: '/aide',    icon: '💡',  title: 'AIDE',      desc: 'Guide complet et tutoriel vidéo de la plateforme.',  accent: '#00f2ff', requiresSub: false },
+  { id: 'galerie',  href: '/galerie', icon: '🖼️',  title: 'GALERIE',   desc: 'Collection complète de tableaux.', accent: '#f97316', requiresSub: false },
+  { id: 'manga',    href: '/manga',   icon: '📖',  title: 'MANGA',     desc: 'Mangas, webtoons et BD en streaming illimité dans l\'univers d\'Otaku Shop.',      accent: '#f97316', requiresSub: true  },
+  { id: 'jeux',     href: '/jeux',    icon: '🎮',  title: 'IMMERSION', desc: 'My Remix et jeux exclusifs dans l\'univers d\'Otaku Shop.',  accent: '#f97316', requiresSub: true  },
+  { id: 'aide',     href: '/aide',    icon: '💡',  title: 'AIDE',      desc: 'Guide complet et tutoriel vidéo de la plateforme.',  accent: '#f97316', requiresSub: false },
 ];
 
 export default async function HomePage({
@@ -99,16 +99,17 @@ export default async function HomePage({
 
   const profile = await getProfile();
   const subscribed = isSubscriber(profile?.subscription_tier ?? null, profile?.subscription_expires_at ?? null);
+  const isNft = profile?.subscription_tier === 'nft';
 
   return (
     <>
       <style>{`
         .action-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
-        .action-card:hover { border-color: rgba(0,242,255,0.5) !important; box-shadow: 0 0 24px rgba(0,242,255,0.12); transform: translateY(-3px); }
-        .action-card:hover .action-icon { text-shadow: 0 0 20px rgba(0,242,255,0.6); }
+        .action-card:hover { border-color: rgba(249,115,22,0.5) !important; box-shadow: 0 0 24px rgba(249,115,22,0.12); transform: translateY(-3px); }
+        .action-card:hover .action-icon { text-shadow: 0 0 20px rgba(249,115,22,0.6); }
         .compte-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
-        .compte-card:hover { border-color: rgba(168,85,247,0.5) !important; box-shadow: 0 0 24px rgba(168,85,247,0.12); transform: translateY(-3px); }
-        .search-input:focus { border-color: rgba(0,242,255,0.5) !important; box-shadow: 0 0 12px rgba(0,242,255,0.1); }
+        .compte-card:hover { border-color: rgba(251,146,60,0.5) !important; box-shadow: 0 0 24px rgba(251,146,60,0.12); transform: translateY(-3px); }
+        .search-input:focus { border-color: rgba(249,115,22,0.5) !important; box-shadow: 0 0 12px rgba(249,115,22,0.1); }
       `}</style>
 
       <div style={{ background: '#000', minHeight: '100vh' }}>
@@ -116,18 +117,21 @@ export default async function HomePage({
         {/* ── HERO ── */}
         <div style={{ textAlign: 'center', padding: '70px 20px 56px' }}>
           <p style={{ color: '#333', fontSize: '0.75rem', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '16px' }}>
-            Streaming · NFT · Création
+            Streaming · Tableaux · Jeux
           </p>
           <h1 style={{
             fontSize: 'clamp(2rem, 5vw, 3rem)',
             letterSpacing: '6px',
-            color: '#00f2ff',
-            textShadow: '0 0 30px rgba(0,242,255,0.4)',
+            color: '#f97316',
+            textShadow: '0 0 30px rgba(249,115,22,0.4)',
             margin: '0 0 14px',
           }}>
             OTAKU SHOP
           </h1>
-          <div style={{ width: '40px', height: '1px', background: '#00f2ff', margin: '0 auto' }} />
+          <p style={{ color: '#555', fontSize: '0.8rem', letterSpacing: '2px', margin: '10px 0 0' }}>
+            Le 9ème art débloqué par la blockchain
+          </p>
+          <div style={{ width: '40px', height: '1px', background: '#f97316', margin: '14px auto 0' }} />
         </div>
 
         {/* ── GRILLE D'ACTIONS ── */}
@@ -146,10 +150,10 @@ export default async function HomePage({
                 }}>
                   <Link href={locked ? '/compte' : box.href} style={{ textDecoration: 'none', display: 'block' }}>
                     <div className="action-icon" style={{ fontSize: '1.8rem', marginBottom: '14px' }}>
-                      {box.icon}
+                      <span className="emoji">{box.icon}</span>
                     </div>
                     <h2 style={{
-                      color: locked ? '#333' : '#00f2ff',
+                      color: locked ? '#333' : '#f97316',
                       fontSize: '0.85rem',
                       fontWeight: 700,
                       letterSpacing: '2.5px',
@@ -163,8 +167,8 @@ export default async function HomePage({
                   </Link>
                   {locked && (
                     <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#333', fontSize: '0.75rem' }}>🔒 Abonnés</span>
-                      <Link href="/compte" style={{ color: '#00f2ff', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
+                      <span style={{ color: '#333', fontSize: '0.75rem' }}><span className="emoji">🔒</span> Abonnés</span>
+                      <Link href="/compte" style={{ color: '#f97316', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
                         S&apos;abonner →
                       </Link>
                     </div>
@@ -172,6 +176,41 @@ export default async function HomePage({
                 </div>
               );
             })}
+
+            {/* CLUB VIP */}
+            <div className="action-card" style={{
+              background: isNft ? 'rgba(249,115,22,0.04)' : '#0a0a0a',
+              border: `1px solid ${isNft ? 'rgba(249,115,22,0.2)' : '#1a1a1a'}`,
+              borderRadius: '16px',
+              padding: '28px 24px',
+              opacity: isNft ? 1 : 0.5,
+            }}>
+              <Link href={isNft ? '/club-vip' : '/compte'} style={{ textDecoration: 'none', display: 'block' }}>
+                <div className="action-icon" style={{ fontSize: '1.8rem', marginBottom: '14px' }}>
+                  <span className="emoji">👑</span>
+                </div>
+                <h2 style={{
+                  color: isNft ? '#f97316' : '#333',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  letterSpacing: '2.5px',
+                  marginBottom: '8px',
+                }}>
+                  CLUB VIP
+                </h2>
+                <p style={{ color: '#555', fontSize: '0.82rem', lineHeight: 1.6 }}>
+                  Commandes sur mesure & événements exclusifs.
+                </p>
+              </Link>
+              {!isNft && (
+                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#333', fontSize: '0.75rem' }}><span className="emoji">🔒</span> NFT</span>
+                  <Link href="/compte" style={{ color: '#f97316', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
+                    En savoir plus →
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {/* MON COMPTE */}
             <div className="compte-card" style={{
@@ -182,10 +221,10 @@ export default async function HomePage({
             }}>
               <Link href="/compte" style={{ textDecoration: 'none', display: 'block' }}>
                 <div style={{ fontSize: '1.8rem', marginBottom: '14px' }}>
-                  {profile ? '👤' : '🔑'}
+                  <span className="emoji">{profile ? '👤' : '🔑'}</span>
                 </div>
                 <h2 style={{
-                  color: '#a855f7',
+                  color: '#fb923c',
                   fontSize: '0.85rem',
                   fontWeight: 700,
                   letterSpacing: '2.5px',
@@ -195,7 +234,8 @@ export default async function HomePage({
                 </h2>
                 <p style={{ color: '#555', fontSize: '0.82rem', lineHeight: 1.6 }}>
                   {profile && subscribed
-                    ? '⭐ Abonnement actif'
+                    ? <><span className="emoji">⭐</span> Abonnement actif</>
+
                     : profile
                     ? 'Activez votre abonnement.'
                     : 'Connexion ou inscription.'}

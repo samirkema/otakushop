@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --neon: #00f2ff;
-  --neon-dim: rgba(0, 242, 255, 0.25);
-  --purple: #a855f7;
-  --purple-dim: rgba(168, 85, 247, 0.25);
+  --neon: #f97316;
+  --neon-dim: rgba(249, 115, 22, 0.25);
+  --purple: #fb923c;
+  --purple-dim: rgba(251, 146, 60, 0.25);
   --bg: #000000;
   --surface: #0d0d0d;
   --surface-2: #111111;
@@ -34,10 +34,10 @@ body {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 242, 255, 0.4); }
+::-webkit-scrollbar-thumb:hover { background: rgba(249, 115, 22, 0.4); }
 
 *:focus-visible {
-  outline: 2px solid #00f2ff;
+  outline: 2px solid #f97316;
   outline-offset: 2px;
 }
 
@@ -52,6 +52,11 @@ body {
 [data-theme="light"] canvas,
 [data-theme="light"] iframe {
   filter: invert(1) hue-rotate(180deg);
+}
+/* Re-inversion pour les émojis — ils sont déjà colorés naturellement */
+[data-theme="light"] .emoji {
+  filter: invert(1) hue-rotate(180deg);
+  display: inline-block;
 }
 
 /* ── INPUTS DARK ── */

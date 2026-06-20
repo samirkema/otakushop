@@ -9,8 +9,8 @@ export async function Navbar() {
   return (
     <nav style={{
       background: '#111',
-      borderBottom: '2px solid rgba(0,242,255,0.3)',
-      boxShadow: '0 0 15px rgba(0,242,255,0.1)',
+      borderBottom: '2px solid rgba(249,115,22,0.3)',
+      boxShadow: '0 0 15px rgba(249,115,22,0.1)',
       position: 'sticky',
       top: 0,
       zIndex: 40,
@@ -27,9 +27,9 @@ export async function Navbar() {
         <Link href="/" style={{
           fontWeight: 'bold',
           fontSize: '1.1rem',
-          color: '#00f2ff',
+          color: '#f97316',
           textDecoration: 'none',
-          textShadow: '0 0 10px rgba(0,242,255,0.5)',
+          textShadow: '0 0 10px rgba(249,115,22,0.5)',
           letterSpacing: '3px',
         }}>
           OTAKU SHOP
@@ -51,15 +51,19 @@ export async function Navbar() {
                     className="hover:text-white transition-colors">Jeux</Link>
                 </>
               )}
+              {profile.subscription_tier === 'nft' && (
+                <Link href="/club-vip" style={{ color: '#f97316', textDecoration: 'none', fontWeight: 600 }}
+                  className="hover:text-white transition-colors">Club VIP</Link>
+              )}
               {isAdmin(profile.role) && (
                 <Link href="/admin" style={{ color: '#aaa', textDecoration: 'none' }}
                   className="hover:text-white transition-colors">Admin</Link>
               )}
               <Link href="/compte" style={{
-                color: '#00f2ff',
+                color: '#f97316',
                 textDecoration: 'none',
                 fontWeight: 600,
-                textShadow: '0 0 8px rgba(0,242,255,0.4)',
+                textShadow: '0 0 8px rgba(249,115,22,0.4)',
               }}>
                 {profile.pseudo}
               </Link>
@@ -70,8 +74,8 @@ export async function Navbar() {
                 className="hover:text-white transition-colors">Connexion</Link>
               <Link href="/auth/register" style={{
                 background: 'transparent',
-                border: '1.5px solid #00f2ff',
-                color: '#00f2ff',
+                border: '1.5px solid #f97316',
+                color: '#f97316',
                 padding: '6px 16px',
                 borderRadius: '20px',
                 textDecoration: 'none',

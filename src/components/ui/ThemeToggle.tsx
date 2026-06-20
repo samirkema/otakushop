@@ -29,7 +29,7 @@ export function ThemeToggle() {
         width: '44px',
         height: '44px',
         borderRadius: '50%',
-        border: '2px solid rgba(0,242,255,0.35)',
+        border: '2px solid rgba(249,115,22,0.35)',
         background: 'rgba(0,0,0,0.7)',
         backdropFilter: 'blur(8px)',
         fontSize: '1.2rem',
@@ -42,12 +42,12 @@ export function ThemeToggle() {
       }}
       className="theme-toggle-btn"
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      <span className="emoji">{theme === 'dark' ? '☀️' : '🌙'}</span>
       <style>{`
         .theme-toggle-btn:hover {
-          border-color: #00f2ff !important;
+          border-color: #f97316 !important;
           transform: scale(1.1);
-          box-shadow: 0 0 14px rgba(0,242,255,0.3) !important;
+          box-shadow: 0 0 14px rgba(249,115,22,0.3) !important;
         }
       `}</style>
     </button>
